@@ -1,0 +1,373 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum OrgPlan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum SyncStatus {
+  PENDING
+  SYNCING
+  SYNCED
+  FAILED
+}
+
+enum FeedbackRating {
+  HELPFUL
+  NOT_HELPFUL
+  HIGHLY_RELEVANT
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+enum WebhookStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum EnrichmentStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+enum ProcessingStatus {
+  IDLE
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id            String           @id @default(cuid())
+  clerkId       String?          @unique
+  email         String           @unique
+  emailVerified DateTime?
+  password      String?
+  name          String?
+  image         String?
+  avatarUrl     String?
+  plan                 OrgPlan          @default(FREE)
+  prefSyncFailures     Boolean          @default(true)
+  prefNewPRNeedContext Boolean          @default(true)
+  prefWeeklyDigest     Boolean          @default(false)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  accounts             Account[]
+  sessions             Session[]
+  organizations        Organization[]
+  chatSessions         ChatSession[]
+  feedbacks            MemoryFeedback[]
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+  refresh_token_expires_in Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Organization {
+  id          String       @id @default(cuid())
+  name        String
+  githubOrgId String       @unique
+  plan        OrgPlan      @default(FREE)
+  ownerId     String
+  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  repositories Repository[]
+  apiKeys     ApiKey[]
+}
+
+model Repository {
+  id                   String           @id @default(cuid())
+  orgId                String
+  organization         Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  owner                String
+  name                 String
+  fullName             String           @unique
+  githubRepoId         String           @unique
+  defaultBranch        String           @default("main")
+  datasetName          String           @unique
+  cogneeDatasetId      String?
+  syncStatus           SyncStatus       @default(PENDING)
+  memoryScore          Float            @default(0)
+  lastSyncAt           DateTime?
+  lastEnrichedAt       DateTime?
+  lastEnrichmentStatus EnrichmentStatus?
+  githubInstallationId String
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  dataset              Dataset?
+  pullRequests         PullRequest[]
+  issues               Issue[]
+  commits              Commit[]
+  pruneEvents          PruneEvent[]
+  enrichmentRuns       EnrichmentRun[]
+  memoryFeedbacks      MemoryFeedback[]
+  chatSessions         ChatSession[]
+  webhookEvents        WebhookEvent[]
+  notifications        Notification[]
+
+  @@index([orgId])
+  @@index([syncStatus])
+}
+
+model Dataset {
+  id               String           @id @default(cuid())
+  repoId           String           @unique
+  repository       Repository       @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  cogneeName       String
+  cogneeDatasetId  String?
+  nodeCount        Int              @default(0)
+  edgeCount        Int              @default(0)
+  qualityScore     Float            @default(0)
+  processingStatus ProcessingStatus @default(IDLE)
+  lastImprovedAt   DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+model PullRequest {
+  id             String     @id @default(cuid())
+  repoId         String
+  repository     Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  githubPrNumber Int
+  title          String
+  body           String?    @db.Text
+  state          String
+  authorLogin    String
+  filesAffected  Json       @default("[]")
+  labels         Json       @default("[]")
+  mergedAt       DateTime?
+  closedAt       DateTime?
+  recallHitCount Int        @default(0)
+  lastRecalledAt DateTime?
+  feedbackCount  Int        @default(0)
+  helpfulFeedbackCount Int  @default(0)
+  stale          Boolean    @default(false)
+  staleAt        DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([repoId, githubPrNumber])
+  @@index([repoId])
+  @@index([state])
+}
+
+model Issue {
+  id                String     @id @default(cuid())
+  repoId            String
+  repository        Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  githubIssueNumber Int
+  title             String
+  body              String?    @db.Text
+  state             String
+  labels            Json       @default("[]")
+  closedAt          DateTime?
+  recallHitCount    Int        @default(0)
+  lastRecalledAt    DateTime?
+  feedbackCount     Int        @default(0)
+  helpfulFeedbackCount Int     @default(0)
+  stale             Boolean    @default(false)
+  staleAt           DateTime?
+  createdAt         DateTime   @default(now())
+
+  @@unique([repoId, githubIssueNumber])
+  @@index([repoId])
+}
+
+model Commit {
+  id           String     @id @default(cuid())
+  repoId       String
+  repository   Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  sha          String     @unique
+  message      String
+  authorLogin  String
+  filesChanged Json       @default("[]")
+  recallHitCount Int      @default(0)
+  lastRecalledAt DateTime?
+  feedbackCount Int       @default(0)
+  helpfulFeedbackCount Int @default(0)
+  stale        Boolean    @default(false)
+  staleAt      DateTime?
+  createdAt    DateTime   @default(now())
+
+  @@index([repoId])
+  @@index([createdAt])
+}
+
+model MemoryFeedback {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repoId         String
+  repository     Repository     @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  recallQuery    String
+  recallResults  Json
+  rating         FeedbackRating
+  idempotencyKey String         @unique
+  createdAt      DateTime       @default(now())
+
+  @@index([repoId])
+  @@index([userId])
+  @@index([rating])
+}
+
+model ChatSession {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repoId          String
+  repository      Repository    @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  cogneeSessionId String        @unique
+  createdAt       DateTime      @default(now())
+  closedAt        DateTime?
+  messages        ChatMessage[]
+
+  @@index([repoId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id              String      @id @default(cuid())
+  sessionId       String
+  chatSession     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role            MessageRole
+  content         String      @db.Text
+  citations       Json        @default("[]")
+  confidenceScore Float?
+  recallSource    String?
+  createdAt       DateTime    @default(now())
+
+  @@index([sessionId])
+}
+
+model WebhookEvent {
+  id            String        @id @default(cuid())
+  repoId        String
+  repository    Repository    @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  githubEventId String        @unique
+  eventType     String
+  payload       Json
+  status        WebhookStatus @default(PENDING)
+  errorMsg      String?       @db.Text
+  processedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([repoId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model PruneEvent {
+  id           String     @id @default(cuid())
+  repoId       String
+  repository   Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  nodesPruned  Int        @default(0)
+  staleNodeIds Json       @default("[]")
+  createdAt    DateTime   @default(now())
+
+  @@index([repoId])
+  @@index([createdAt])
+}
+
+model EnrichmentRun {
+  id              String           @id @default(cuid())
+  repoId          String
+  repository      Repository       @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  startedAt       DateTime         @default(now())
+  completedAt     DateTime?
+  nodesEnriched   Int              @default(0)
+  nodesPruned     Int              @default(0)
+  newQualityScore Int              @default(0)
+  status          EnrichmentStatus
+  errorMessage    String?          @db.Text
+  triggerSource   String           @default("scheduled")
+
+  @@index([repoId])
+  @@index([startedAt])
+  @@index([status])
+}
+
+model ApiKey {
+  id           String       @id @default(cuid())
+  orgId        String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  keyHash      String       @unique
+  name         String
+  lastUsedAt   DateTime?
+  createdAt    DateTime     @default(now())
+
+  @@index([orgId])
+}
+
+model Notification {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repoId    String?
+  repo      Repository? @relation(fields: [repoId], references: [id], onDelete: SetNull)
+  read      Boolean    @default(false)
+  type      String     // "sync_failure", "pr_context", "milestone"
+  message   String
+  payload   Json       @default("{}")
+  createdAt DateTime   @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+

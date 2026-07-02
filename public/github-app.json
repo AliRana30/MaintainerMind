@@ -1,0 +1,22 @@
+{
+  "name": "MaintainerMind",
+  "url": "https://maintainermind.ai",
+  "hook_attributes": {
+    "url": "https://maintainermind.ai/api/webhooks/github"
+  },
+  "redirect_url": "https://maintainermind.ai/api/github/callback",
+  "public": false,
+  "default_permissions": {
+    "pull_requests": "write",
+    "issues": "read",
+    "contents": "read",
+    "metadata": "read"
+  },
+  "default_events": [
+    "pull_request",
+    "issues",
+    "push",
+    "issue_comment",
+    "pull_request_review"
+  ]
+}

@@ -1,0 +1,20 @@
+export default function Icon() {
+  const svg = `
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Maintainermind">
+      <rect width="32" height="32" rx="8" fill="#0d1117" />
+      <path d="M16 6C12 6 9 9 9 13C9 15.5 10.5 17.5 11 19C11.5 20.5 11 22 13 23.5C14.5 24.5 15.5 25.5 16 26.5" stroke="#2bee4b" stroke-width="2.2" stroke-linecap="round" />
+      <path d="M16 6C20 6 23 9 23 13C23 15.5 21.5 17.5 21 19C20.5 20.5 21 22 19 23.5C17.5 24.5 16.5 25.5 16 26.5" stroke="#2bee4b" stroke-width="2.2" stroke-linecap="round" />
+      <line x1="16" y1="6" x2="16" y2="26" stroke="#2bee4b" stroke-width="1.5" stroke-dasharray="2 2" />
+      <circle cx="16" cy="6" r="2.5" fill="#0d1117" stroke="#2bee4b" stroke-width="1.5" />
+      <circle cx="9" cy="13" r="2" fill="#2bee4b" />
+      <circle cx="23" cy="13" r="2" fill="#2bee4b" />
+    </svg>
+  `.trim();
+
+  return new Response(svg, {
+    headers: {
+      "Content-Type": "image/svg+xml",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
+}

@@ -1,0 +1,22 @@
+{
+  "framework": "nextjs",
+  "functions": {
+    "src/app/api/chat/stream/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/webhooks/github/route.ts": {
+      "maxDuration": 10
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/webhooks/github",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
+    }
+  ]
+}

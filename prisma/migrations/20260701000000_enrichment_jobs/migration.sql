@@ -1,0 +1,66 @@
+-- CreateEnum
+DO $$ BEGIN
+  CREATE TYPE "EnrichmentStatus" AS ENUM ('RUNNING', 'SUCCESS', 'FAILED');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+-- AlterTable
+ALTER TABLE "Repository" ADD COLUMN IF NOT EXISTS "lastEnrichedAt" TIMESTAMP(3);
+ALTER TABLE "Repository" ADD COLUMN IF NOT EXISTS "lastEnrichmentStatus" "EnrichmentStatus";
+
+ALTER TABLE "PullRequest" ADD COLUMN IF NOT EXISTS "recallHitCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "PullRequest" ADD COLUMN IF NOT EXISTS "lastRecalledAt" TIMESTAMP(3);
+ALTER TABLE "PullRequest" ADD COLUMN IF NOT EXISTS "feedbackCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "PullRequest" ADD COLUMN IF NOT EXISTS "helpfulFeedbackCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "PullRequest" ADD COLUMN IF NOT EXISTS "stale" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "PullRequest" ADD COLUMN IF NOT EXISTS "staleAt" TIMESTAMP(3);
+
+ALTER TABLE "Issue" ADD COLUMN IF NOT EXISTS "recallHitCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Issue" ADD COLUMN IF NOT EXISTS "lastRecalledAt" TIMESTAMP(3);
+ALTER TABLE "Issue" ADD COLUMN IF NOT EXISTS "feedbackCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Issue" ADD COLUMN IF NOT EXISTS "helpfulFeedbackCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Issue" ADD COLUMN IF NOT EXISTS "stale" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Issue" ADD COLUMN IF NOT EXISTS "staleAt" TIMESTAMP(3);
+
+ALTER TABLE "Commit" ADD COLUMN IF NOT EXISTS "recallHitCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Commit" ADD COLUMN IF NOT EXISTS "lastRecalledAt" TIMESTAMP(3);
+ALTER TABLE "Commit" ADD COLUMN IF NOT EXISTS "feedbackCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Commit" ADD COLUMN IF NOT EXISTS "helpfulFeedbackCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Commit" ADD COLUMN IF NOT EXISTS "stale" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Commit" ADD COLUMN IF NOT EXISTS "staleAt" TIMESTAMP(3);
+
+-- CreateTable
+CREATE TABLE IF NOT EXISTS "PruneEvent" (
+  "id" TEXT NOT NULL,
+  "repoId" TEXT NOT NULL,
+  "nodesPruned" INTEGER NOT NULL DEFAULT 0,
+  "staleNodeIds" JSONB NOT NULL DEFAULT '[]',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "PruneEvent_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "EnrichmentRun" (
+  "id" TEXT NOT NULL,
+  "repoId" TEXT NOT NULL,
+  "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "completedAt" TIMESTAMP(3),
+  "nodesEnriched" INTEGER NOT NULL DEFAULT 0,
+  "nodesPruned" INTEGER NOT NULL DEFAULT 0,
+  "newQualityScore" INTEGER NOT NULL DEFAULT 0,
+  "status" "EnrichmentStatus" NOT NULL,
+  "errorMessage" TEXT,
+  "triggerSource" TEXT NOT NULL DEFAULT 'scheduled',
+  CONSTRAINT "EnrichmentRun_pkey" PRIMARY KEY ("id")
+);
+
+-- AddForeignKey
+ALTER TABLE "PruneEvent" ADD CONSTRAINT "PruneEvent_repoId_fkey" FOREIGN KEY ("repoId") REFERENCES "Repository"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "EnrichmentRun" ADD CONSTRAINT "EnrichmentRun_repoId_fkey" FOREIGN KEY ("repoId") REFERENCES "Repository"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddIndex
+CREATE INDEX IF NOT EXISTS "PruneEvent_repoId_idx" ON "PruneEvent"("repoId");
+CREATE INDEX IF NOT EXISTS "PruneEvent_createdAt_idx" ON "PruneEvent"("createdAt");
+CREATE INDEX IF NOT EXISTS "EnrichmentRun_repoId_idx" ON "EnrichmentRun"("repoId");
+CREATE INDEX IF NOT EXISTS "EnrichmentRun_startedAt_idx" ON "EnrichmentRun"("startedAt");
+CREATE INDEX IF NOT EXISTS "EnrichmentRun_status_idx" ON "EnrichmentRun"("status");
