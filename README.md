@@ -324,18 +324,6 @@ MaintainerMind requires a GitHub App (not a plain OAuth App) to receive webhook 
 
 ---
 
-## Cognee Open Source Contributions
-
-As part of this hackathon, two backend adapter PRs have been submitted to the [Cognee repository](https://github.com/topoteretes/cognee):
-
-**Turso vector adapter** — `TursoVectorAdapter(VectorDBInterface)` implementing all required methods using libSQL's native vector type and `vector_distance_cos()` for similarity search. Selectable via `VECTOR_DB_PROVIDER=turso`.
-
-**Turso graph adapter** — `TursoAdapter(GraphDBInterface)` modeling the knowledge graph as two relational tables (`graph_node`, `graph_edge`) with traversals implemented as parameterised SQL JOINs and `WITH RECURSIVE` CTEs. Selectable via `GRAPH_DATABASE_PROVIDER=turso`. Enables Cognee on edge, embedded, and serverless deployments without standing up Neo4j or PostgreSQL.
-
-Both adapters include a dataset database handler for multi-user mode and e2e test results run against a real Turso instance.
-
----
-
 ## Resources
 
 - [Cognee repository](https://github.com/topoteretes/cognee)
