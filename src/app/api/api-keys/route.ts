@@ -3,6 +3,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 
+// Prevent Next.js static analysis at build time — requires DB at runtime only
+export const dynamic = "force-dynamic";
+
+
 // Helper to hash key
 function hashKey(key: string): string {
   return crypto.createHash("sha256").update(key).digest("hex");
