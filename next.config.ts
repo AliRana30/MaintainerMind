@@ -12,29 +12,6 @@ if (fs.existsSync(conflictingFile)) {
   }
 }
 
-const postcssPluginPath = path.join(process.cwd(), "node_modules/@tailwindcss/postcss");
-if (!fs.existsSync(postcssPluginPath)) {
-  try {
-    execSync("npm install @tailwindcss/postcss@4.0.0-beta.4 postcss@8.4.49 --no-audit --no-fund", {
-      stdio: "inherit",
-    });
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-const gsapPath = path.join(process.cwd(), "node_modules/gsap");
-if (!fs.existsSync(gsapPath)) {
-  try {
-    execSync("npm install gsap --no-audit --no-fund", {
-      stdio: "inherit",
-    });
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-
 
 const nextConfig: NextConfig = {
   typescript: {
