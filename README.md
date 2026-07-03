@@ -1,324 +1,328 @@
-<div align="center">
+# MaintainerMind
 
-# 🧠 MaintainerMind
+**Long-term cognitive memory for open source repositories.**
 
-### *Long-Term Cognitive Memory for Open Source Repositories*
+MaintainerMind gives GitHub repositories persistent institutional knowledge. Every pull request, commit, issue, discussion, and architectural decision is continuously ingested into a semantic knowledge graph that can be queried at any time by maintainers, by AI agents, and by the review pipeline itself.
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org)
-[![Cognee](https://img.shields.io/badge/Powered%20by-Cognee-6E56F2)](https://cognee.ai)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://postgresql.org)
-[![BullMQ](https://img.shields.io/badge/Queue-BullMQ-red)](https://bullmq.io)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://docker.com)
+When a new pull request opens, MaintainerMind recalls previous implementation decisions, similar bugs, related files, rejected approaches, and architectural discussions before the maintainer reads a single line of diff.
 
-> **MaintainerMind solves institutional knowledge loss in open-source repositories by building a persistent, AI-queryable knowledge graph from every PR, commit, issue, and code review — powered by Cognee's hybrid graph-vector memory.**
-
-</div>
+Built for the [WeMakeDevs × Cognee Hackathon](https://www.wemakedevs.org/hackathons/cognee), June–July 2026.
 
 ---
 
-## 🎯 The Problem
+## The Problem
 
-Open source has changed. AI coding assistants now generate pull requests in minutes, flooding repositories with activity. But the real problem isn't volume — it's **context collapse**:
+AI-assisted coding has dramatically accelerated pull request volume. Repositories now receive hundreds of contributions per week. The review bottleneck has not moved it has gotten worse.
 
-- 🔁 Maintainers repeat the same explanations across hundreds of PRs
-- 🗂️ Architectural decisions are buried in 2-year-old issue threads
-- 🔄 Contributors unknowingly reproduce bugs that were already fixed
-- 💀 When key maintainers leave, institutional knowledge disappears with them
-- 🤖 AI-assisted PRs arrive with no understanding of repository history
+Institutional knowledge lives inside merged pull requests, commit messages, closed issues, code review threads, and architectural discussions. As repositories grow, this knowledge becomes progressively harder to recover. Maintainers spend significant time re-explaining decisions that were already made, triaging duplicate issues, and reviewing code that repeats known mistakes.
 
-**Every repository is slowly losing its memory.**
+MaintainerMind treats this as a memory problem and solves it at the infrastructure level.
 
 ---
 
-## 💡 The Solution
+## Solution
 
-MaintainerMind continuously listens to GitHub activity via webhooks, ingests every event through a background worker pipeline, and builds a **persistent semantic knowledge graph** using Cognee Cloud. When a new PR is opened, the system instantly surfaces:
+MaintainerMind listens to GitHub webhooks. Every repository event is processed through a background queue and stored in Cognee Cloud as a structured knowledge graph node. Each node carries typed metadata — PR outcome, files affected, author, timestamp, architectural category — and is linked to related nodes across the graph.
 
-- 🔍 Similar historical pull requests and their outcomes
-- ⚠️ Previously rejected approaches and *why* they were rejected  
-- 🏗️ Related architectural decisions from months-old discussions
-- 🐛 Potential regressions based on files changed
-- 🤝 Relevant reviewers who worked on related code
+When a new pull request opens, the system performs semantic recall against this graph and surfaces relevant historical context: similar PRs, prior decisions on affected files, previously rejected approaches, and known regressions. Maintainers receive this context before they begin review.
 
-**Instead of asking "Has this been done before?" — MaintainerMind already knows.**
+The knowledge graph is queryable at any time through the AI chat interface, the PR insights panel, and the knowledge graph explorer.
 
 ---
 
-## 🏆 Judging Criteria — How MaintainerMind Qualifies
+## How Cognee Powers MaintainerMind
 
-### 1. 🌍 Potential Impact
-Every software project — from 10-star hobby repos to 100k-star enterprise OSS — suffers from knowledge loss. MaintainerMind transforms repositories from amnesiac black boxes into **self-documenting intelligent systems**. As AI-generated code floods platforms like GitHub, this becomes not a nice-to-have but a **critical infrastructure layer** for sustainable open-source maintenance.
+MaintainerMind uses all four Cognee memory operations across the full application lifecycle.
 
-### 2. 🔬 Creativity & Innovation
-We didn't build another chatbot or RAG wrapper. MaintainerMind is a **living, evolving knowledge layer** that:
-- Treats a repository's entire history as a structured cognitive entity
-- Uses Cognee's graph-vector hybrid to model **relationships**, not just similarity
-- Implements selective memory pruning (`forget()`) so the graph never becomes stale
-- Provides per-PR proactive memory surfacing before maintainers even ask
+### remember()
 
-### 3. ⚙️ Technical Excellence
-- **Event-driven architecture**: GitHub Webhooks → BullMQ → Worker → Cognee/PostgreSQL
-- **Circuit breaker pattern** on all Cognee API calls (graceful degradation)
-- **Idempotent webhook processing** (deduplication via `githubEventId`)
-- **Cascading cleanup**: Disconnecting a repo forgets its Cognee dataset + cascades DB deletes
-- **Health-aware queue**: Worker gracefully handles SIGTERM/SIGINT for zero-downtime restarts
-- **Production-grade Docker setup**: Multi-stage build, non-root user, proper health checks
+Every GitHub webhook event is converted into a typed graph node and stored via `remember()`, scoped to a per-repository dataset:
 
-### 4. 🧠 Best Use of Cognee
+```
+dataset = "repo:{owner}/{name}"
+```
 
-MaintainerMind implements the **full Cognee memory lifecycle**:
+Node types include pull requests, commits, issues, discussions, documentation, and release notes. Each node carries structured metadata (type, date, author, files affected, outcome) and is linked to related nodes by Cognee's graph engine.
 
-| Cognee API | Where Used | What It Does |
+Processing runs in the background. MaintainerMind polls dataset status until indexing completes before marking a repository as searchable.
+
+### recall()
+
+Semantic retrieval powers every query surface in the application:
+
+- AI chat interface (conversational, session-scoped)
+- PR context suggestions (triggered on PR open webhook)
+- Repository search
+- Historical decision lookup
+- Knowledge graph explorer
+
+Two retrieval strategies are used depending on context:
+
+- `GRAPH_COMPLETION` — for relationship traversal queries ("what decisions were made about authentication?")
+- `CHUNKS` — for fast similarity retrieval against raw content
+
+Session IDs preserve conversational context across multi-turn chat.
+
+### improve()
+
+Graph enrichment runs post-ingestion and on demand. Maintainers can trigger `improve()` from the Memory Evolution dashboard to re-weight entity relationships, rebuild semantic links, and improve retrieval accuracy over time. The Memory Quality Score on the dashboard reflects the real output of this operation — it is computed from recall accuracy (helpful/not-helpful feedback ratio), node freshness, and file coverage.
+
+### forget()
+
+Large refactors can invalidate historical knowledge. Rather than deleting entire datasets, `forget()` removes stale node epochs while preserving raw repository data. This prevents obsolete architecture from influencing future AI responses. The Memory Evolution dashboard shows the last prune timestamp and nodes removed.
+
+---
+
+## Knowledge Graph Structure
+
+Cognee builds a semantic graph connecting entities across the repository. This allows MaintainerMind to answer questions that keyword search cannot — understanding relationships between events, not just textual similarity.
+
+```mermaid
+graph LR
+    Issue -->|requested| Commit
+    Commit -->|modified| File
+    File -->|reviewed in| PR
+    PR -->|rejected approach| Decision
+    Decision -->|informs| Issue2[Issue]
+```
+
+```mermaid
+graph LR
+    PR2[Pull Request] -->|touches| File2[File]
+    File2 -->|has history in| Decision2[Decision]
+    Decision2 -->|was made in| PR3[Past PR]
+    PR3 -->|by| Contributor
+```
+
+---
+
+## Architecture
+
+```mermaid
+graph TD
+    GH[GitHub Repository] -->|Webhooks| API[Next.js API Routes]
+    API -->|Enqueue jobs| Queue[BullMQ Redis Queue]
+    Queue -->|Consume| Worker[Background Workers]
+    Worker -->|Persist metadata| DB[PostgreSQL]
+    Worker -->|remember| Cognee[Cognee Cloud]
+    Cognee -->|Constructs| KG[Knowledge Graph]
+    Dashboard[Web Dashboard] -->|Query stats| DB
+    Dashboard -->|recall| Cognee
+    Chat[AI Chat] -->|recall GRAPH_COMPLETION| Cognee
+    PRPanel[PR Insights] -->|recall| Cognee
+```
+
+---
+
+## Feature Comparison
+
+| Capability | Traditional Tools | MaintainerMind |
 |---|---|---|
-| `remember()` | `memory.service.ts` | Every PR/issue/commit ingested per-repo dataset |
-| `recall()` | `graph/recall/route.ts`, `chat` | Powers PR context, AI chat, repo search |
-| `improve()` | `memory/improve/route.ts` | Memory Health optimizer — enriches graph quality |
-| `forget()` | `memory/forget/route.ts`, `disconnect` | Prunes stale data; clears on repo disconnect |
-| Dataset isolation | `install-callback/route.ts` | Each repo gets its own Cognee dataset namespace |
-| `GRAPH_COMPLETION` | Chat interface | Deep graph-traversal answer generation |
-| `CHUNKS` | PR insights | Efficient chunk retrieval for context suggestions |
-
-### 5. ✨ User Experience
-- **Dark-mode developer-first UI** built with Next.js 15 + Framer Motion animations
-- **Real-time notifications** via Server-Sent Events (SSE)
-- **3-step auth flow**: GitHub OAuth → App Install → Repository Sync
-- **Memory Health dashboard**: graph nodes, edges, quality score, enrichment controls
-- **Interactive knowledge graph** visualization (React Flow)
-- **Forgot password** with full recovery flow + password visibility toggles
-- **Smooth section navigation** on marketing page with anchor scrolling
-- **Responsive design** across desktop and mobile
-
-### 6. 📋 Presentation Quality
-This README + the live application demonstrate:
-- Clear problem statement with quantified pain points
-- End-to-end architecture diagram showing data flow
-- Live Cognee API usage across all four memory lifecycle functions
-- One-command Docker setup for instant local demo
+| Repository search | Keyword | Semantic graph |
+| Historical context | Manual | Automatic |
+| PR review assistance | Manual | AI context suggestions |
+| Architectural memory | Lost over time | Persistent |
+| Similar PR detection | No | Yes |
+| Knowledge graph | No | Yes |
+| Semantic relationships | No | Yes |
+| Context-aware chat | Limited | Yes |
+| Memory evolution | Static | improve() |
+| Memory cleanup | Manual | forget() |
 
 ---
 
-## 🏗️ Architecture
+## Technology Stack
 
-```
-GitHub Repository
-      │ webhooks (PR, push, issues)
-      ▼
-Vercel — Next.js 15 (API Routes + Frontend)
-      │ validates + enqueues
-      ▼
-Upstash Redis ←──── BullMQ Job Queues ────► Render (Docker Worker)
-                                                    │
-                            ┌───────────────────────┤
-                            │                       │
-                            ▼                       ▼
-                    PostgreSQL DB          Cognee Cloud API
-                    (Prisma ORM)          (Knowledge Graph)
-                            │                       │
-                            └───────────┬───────────┘
-                                        ▼
-                              Web Dashboard (recall + visualize)
-```
+**Frontend** — Next.js 15, React 19, TypeScript, Tailwind CSS, Framer Motion, TanStack Query v5, Recharts, Lenis
 
-### Pipeline Detail
+**Backend** — Next.js API Routes, BullMQ, Redis, PostgreSQL, Prisma, Octokit
 
-```
-Webhook Event Received
-  → Signature verified (HMAC-SHA256)
-  → WebhookEvent record created in PostgreSQL
-  → Job added to ingestionQueue (BullMQ/Redis)
-  → Worker picks up job
-  → Fetches full PR/issue data from GitHub API
-  → Formats as structured memory text
-  → Calls cognee.remember() with repo dataset
-  → Updates repository sync status in DB
-  → Adds embed job to embeddingQueue
-  → Embedding worker calls cognee.improve()
-```
+**AI Memory** — Cognee Cloud, OpenAI
+
+**Auth** — Clerk, GitHub OAuth, Google OAuth, NextAuth.js
+
+**Deployment** — Docker, Docker Compose, Vercel
 
 ---
 
-## 🛠️ Technology Stack
-
-| Layer | Technology |
-|---|---|
-| **Frontend** | Next.js 15, React 19, TypeScript, Tailwind CSS 4, Framer Motion |
-| **Backend API** | Next.js API Routes, NextAuth v4 |
-| **Database** | PostgreSQL 16, Prisma 6 ORM |
-| **Queue System** | BullMQ 5, ioredis, Upstash Redis |
-| **AI Memory** | Cognee Cloud (graph-vector hybrid) |
-| **GitHub Integration** | GitHub App (Webhooks + OAuth) |
-| **Authentication** | NextAuth (GitHub OAuth, Google OAuth, Email/Password) |
-| **Deployment** | Vercel (frontend) + Render (worker) + Docker |
-| **Monitoring** | PostHog, Sentry |
-
----
-
-## 🚀 Quick Start (Local Development)
+## Local Development
 
 ### Prerequisites
-- Node.js 20+
-- Docker Desktop
-- A GitHub App ([create one here](https://github.com/settings/apps/new))
-- A [Cognee Cloud](https://cognee.ai) account
 
-### 1. Clone & Install
+- Node.js 20+
+- Docker (for PostgreSQL and Redis)
+- A [Cognee Cloud](https://cognee.ai) account
+- A GitHub App ([setup guide below](#github-app-setup))
+
+### 1. Clone and install
 
 ```bash
-git clone https://github.com/AliRana30/MaintainerMind.git
-cd MaintainerMind
+git clone https://github.com/AliRana30/maintainermind.git
+cd maintainermind
 npm install
 ```
 
-### 2. Configure Environment
+### 2. Configure environment
 
 ```bash
-cp .env.example .env
-# Fill in your values — see .env.example for all required variables
+cp .env.example .env.local
 ```
 
-Key variables:
+Fill in `.env.local`:
 
 ```env
-# Database & Queue
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/maintainermind"
+# Database
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/maintainermind?schema=public"
+
+# Redis
 REDIS_URL="redis://localhost:6379"
+UPSTASH_REDIS_REST_URL="https://your-upstash-url.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="your_upstash_token_here"
 
-# Cognee (required)
-COGNEE_BASE_URL="https://your-tenant.aws.cognee.ai"
-COGNEE_API_KEY="your-cognee-api-key"
+# Cognee Cloud
+COGNEE_BASE_URL="https://tenant-e49b36eb-62fb-48f3-a123-f5db20a69429.aws.cognee.ai"
+COGNEE_API_KEY="your_cognee_api_key_here"
 
-# GitHub App (required for repo sync)
-GITHUB_APP_ID="your-app-id"
-GITHUB_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
-GITHUB_WEBHOOK_SECRET="your-webhook-secret"
-GITHUB_CLIENT_ID="your-oauth-client-id"
-GITHUB_CLIENT_SECRET="your-oauth-client-secret"
+# GitHub App
+GITHUB_APP_ID="your_github_app_id_here"
+GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+GITHUB_WEBHOOK_SECRET="your_webhook_secret_here"
 
-# Auth
-NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
+# GitHub OAuth
+GITHUB_CLIENT_ID="your_github_client_id_here"
+GITHUB_CLIENT_SECRET="your_github_client_secret_here"
+
+# Google OAuth
+GOOGLE_CLIENT_ID="your_google_client_id_here"
+GOOGLE_CLIENT_SECRET="your_google_client_secret_here"
+
+# NextAuth
+NEXTAUTH_SECRET="your_nextauth_secret_here"
 NEXTAUTH_URL="http://localhost:3000"
 
-# Google OAuth (optional)
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
+# Clerk
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
+CLERK_SECRET_KEY="sk_test_..."
+
+# Monitoring (optional)
+SENTRY_DSN="https://your_sentry_dsn_here"
+NEXT_PUBLIC_POSTHOG_KEY="phc_..."
 ```
 
-### 3. Start Infrastructure
+### 3. Start infrastructure
 
 ```bash
-# Start PostgreSQL + Redis via Docker
-docker compose up -d postgres redis
+docker compose up -d
+```
 
-# Run database migrations
+### 4. Run migrations and seed
+
+```bash
 npx prisma migrate dev
-
-# (Optional) Seed demo data
 npm run seed
 ```
 
-### 4. Start Services
+### 5. Start the worker and dev server
 
 ```bash
-# Terminal 1: Background worker (BullMQ job processor)
+# Terminal 1 — background job worker
 npm run worker
 
-# Terminal 2: Next.js dev server
+# Terminal 2 — Next.js dev server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) → Sign up → Connect a GitHub repository → Watch the memory build.
+Open [http://localhost:3000](http://localhost:3000).
 
-### 5. Full Docker (All-in-One)
+### Optional: run Cognee locally
 
 ```bash
-# Starts postgres + redis + worker in Docker
-docker compose up --build
-
-# First run only — migrate the database
-docker compose exec worker npx prisma migrate deploy
-
-# Run Next.js outside Docker for hot reload
-npm run dev
+git clone https://github.com/topoteretes/cognee
+cd cognee
+pip install -e .
+cognee server
 ```
+
+Then set `COGNEE_BASE_URL=http://localhost:8000` in your `.env.local`.
 
 ---
 
-## 📁 Project Structure
+## GitHub App Setup
+
+MaintainerMind requires a GitHub App (not a plain OAuth App) to receive webhook events and access repository data.
+
+1. Go to **GitHub Settings → Developer settings → GitHub Apps → New GitHub App**
+2. Set the webhook URL to `https://your-domain.com/api/webhooks/github`
+3. Generate a webhook secret and copy it to `GITHUB_WEBHOOK_SECRET`
+4. Set these repository permissions: Contents (read), Issues (read), Pull requests (read), Metadata (read)
+5. Subscribe to these webhook events: `pull_request`, `issues`, `push`, `issue_comment`, `pull_request_review`
+6. After creating the app, generate a private key and copy the contents to `GITHUB_APP_PRIVATE_KEY`
+7. Copy the App ID to `GITHUB_APP_ID`
+
+---
+
+## Demo Script (3 minutes)
+
+**0:00 — Context**
+Open the Overview dashboard. Real repositories are listed with live sync status and knowledge commit counts. The Needs Attention feed surfaces real webhook-triggered alerts.
+
+**0:30 — remember()**
+Connect a repository. MaintainerMind triggers the GitHub App install flow, fetches the real repository list via Octokit, and begins backfilling PRs, issues, and commits via `remember()`. Watch the status transition from Syncing to Synced.
+
+**1:00 — recall()**
+Navigate to AI Chat. Select a synced repository. Ask: *"Why was synchronous ingestion removed?"* The response streams token by token. Citation chips reference real graph node IDs, PR numbers, and dates from the actual repository history.
+
+**1:45 — improve()**
+Click the thumbs-up on a citation. Navigate to Memory Evolution. Click *Run Enrichment Now*. The Memory Quality Score updates in real time, driven by the real `improve()` call response.
+
+**2:15 — Knowledge Graph**
+Navigate to the Knowledge Graph explorer. Select a node (PR, issue, commit, or decision). The right panel populates with real metadata. Click *Recall Graph Path* — a real traversal highlights the connected path across the canvas.
+
+**2:45 — forget()**
+Navigate to Settings → Repositories. Disconnect a repository. Type the repository name to confirm. That repository's nodes disappear from the Knowledge Graph. The Cognee dataset is cleared. Other repositories are unaffected.
+
+---
+
+## Project Structure
 
 ```
 src/
-├── app/
-│   ├── (marketing)/        # Landing page with features & architecture sections
-│   ├── (dashboard)/        # Main app — repos, chat, memory, PR insights
-│   ├── api/
-│   │   ├── auth/           # NextAuth + register + forgot-password + reset-password
-│   │   ├── repos/          # Repository CRUD + disconnect
-│   │   ├── chat/           # AI chat session management
-│   │   ├── github/         # App install callback
-│   │   ├── memory/         # forget() + feedback
-│   │   └── webhooks/       # GitHub event ingestion
-│   ├── login/              # Sign in with GitHub/Google/email
-│   ├── signup/             # 3-step onboarding flow
-│   └── forgot-password/    # Full password recovery flow
-├── components/
-│   ├── layout/             # MarketingNavbar, DashboardHeader
-│   ├── auth/               # AuthVisual, shared auth UI
-│   └── ui/                 # Reusable components
+├── app/                  Next.js App Router pages and API routes
+├── components/           UI components
 ├── lib/
-│   ├── cognee-client.ts    # Cognee API wrapper with circuit breaker
-│   ├── auth-options.ts     # NextAuth providers config
-│   ├── redis.ts            # ioredis + Upstash fallback
-│   └── github.ts           # Octokit helpers, formatters
-└── server/
-    ├── workers/
-    │   ├── ingestion.worker.ts   # Webhook → Cognee remember()
-    │   ├── embedding.worker.ts   # Cognee improve()
-    │   ├── enrichment.worker.ts  # Scheduled graph enrichment
-    │   ├── repo-backfill.ts      # Initial PR/issue/commit sync
-    │   └── worker-registry.ts    # Process entry point
-    ├── queues.ts                 # BullMQ queue definitions
-    └── services/
-        └── memory.service.ts     # GitHub content → Cognee memory
+│   ├── cognee-client.ts  Typed Cognee Cloud API client (remember/recall/improve/forget)
+│   └── github.ts         Octokit GitHub App client
+├── workers/              BullMQ background job workers
+├── services/             Business logic layer
+├── hooks/                TanStack Query hooks
+├── types/                Shared TypeScript types
+└── prisma/               Schema and migrations
 ```
 
 ---
 
-## 🌐 Production Deployment
+## Cognee Open Source Contributions
 
-### Vercel (Frontend + API Routes)
+As part of this hackathon, two backend adapter PRs have been submitted to the [Cognee repository](https://github.com/topoteretes/cognee):
 
-1. Import repo on [vercel.com](https://vercel.com)
-2. Set **Build Command**: `prisma generate && next build`
-3. Add all environment variables (see `.env.example`)
-4. Set `NEXTAUTH_URL` to your Vercel domain
-5. Update GitHub OAuth callback: `https://your-app.vercel.app/api/auth/callback/github`
-6. Update Google OAuth redirect: `https://your-app.vercel.app/api/auth/callback/google`
-7. Set GitHub App webhook URL: `https://your-app.vercel.app/api/webhooks/github`
-8. Run migrations: `DATABASE_URL=prod_url npx prisma migrate deploy`
+**Turso vector adapter** — `TursoVectorAdapter(VectorDBInterface)` implementing all required methods using libSQL's native vector type and `vector_distance_cos()` for similarity search. Selectable via `VECTOR_DB_PROVIDER=turso`.
 
-### Render (Background Worker)
+**Turso graph adapter** — `TursoAdapter(GraphDBInterface)` modeling the knowledge graph as two relational tables (`graph_node`, `graph_edge`) with traversals implemented as parameterised SQL JOINs and `WITH RECURSIVE` CTEs. Selectable via `GRAPH_DATABASE_PROVIDER=turso`. Enables Cognee on edge, embedded, and serverless deployments without standing up Neo4j or PostgreSQL.
 
-1. New Web Service → Docker environment
-2. Connect same GitHub repo
-3. Set environment variables (DATABASE_URL, REDIS_URL, COGNEE_*)
-4. Start command: `node_modules/.bin/tsx src/server/workers/worker-registry.ts`
-
-Both services share the same **Upstash Redis** and **PostgreSQL** — Vercel enqueues jobs, Render processes them.
+Both adapters include a dataset database handler for multi-user mode and e2e test results run against a real Turso instance.
 
 ---
 
-## 🔗 Resources
+## Resources
 
-- **Cognee Repository**: [github.com/topoteretes/cognee](https://github.com/topoteretes/cognee)
-- **Cognee Documentation**: [docs.cognee.ai](https://docs.cognee.ai)
-- **Cognee Website**: [cognee.ai](https://cognee.ai)
+- [Cognee repository](https://github.com/topoteretes/cognee)
+- [Cognee documentation](https://docs.cognee.ai)
+- [WeMakeDevs × Cognee Hackathon](https://www.wemakedevs.org/hackathons/cognee)
 
 ---
 
-<div align="center">
+## Author
 
-**Built for the Cognee Hackathon** · Made by Ali Mahmood
+Ali Rana — [AliRana30](https://github.com/AliRana30)
 
-*MaintainerMind — Because repositories shouldn't have amnesia.*
-
-</div>
+*Built for the WeMakeDevs × Cognee Hackathon, June–July 2026.*
