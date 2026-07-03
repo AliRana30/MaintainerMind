@@ -1,7 +1,7 @@
 import { Worker, Job } from "bullmq";
 import { Octokit } from "@octokit/rest";
 import { createAppAuth } from "@octokit/auth-app";
-import { PrismaClient } from ".prisma/client/index";
+import { PrismaClient } from "@prisma/client";
 import { rememberGitHubContent } from "../services/memory.service"; // assuming memory.service handles cognee.remember calls
 import { enrichmentQueue } from "../queues";
 
