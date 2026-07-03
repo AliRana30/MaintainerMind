@@ -460,7 +460,7 @@ function ScrollProblemSection() {
   ];
 
   return (
-    <div className="w-full bg-[#0d1117] border-t border-[#30363d]/40 flex flex-col">
+    <div id="features" className="w-full bg-[#0d1117] border-t border-[#30363d]/40 flex flex-col">
 
       {/* ─── PHASE 1 SECTION ─── */}
       <section className="relative w-full py-24 sm:py-32 border-b border-[#30363d]/20 px-6 overflow-hidden">
@@ -709,7 +709,7 @@ function SectionSolution() {
   }, []);
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-6 py-24 border-t border-[#30363d]/40 flex flex-col items-center relative overflow-hidden">
+    <section id="architecture" className="w-full max-w-7xl mx-auto px-6 py-24 border-t border-[#30363d]/40 flex flex-col items-center relative overflow-hidden">
       <SubtleDeveloperBackground />
 
       {/* Section Header */}

@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rememberGitHubContent } from "@/server/services/memory.service";
+import { cogneeForget } from "@/lib/cognee-client";
 
 async function getOrCreateUser(req: NextRequest) {
   let sessionUserId = req.headers.get("x-user-id") || req.cookies.get("session")?.value;
@@ -140,6 +141,16 @@ export async function DELETE(req: NextRequest) {
 
     if (!repo) {
       return NextResponse.json({ error: "Repository not found or access denied" }, { status: 404 });
+    }
+
+    const datasetName = repo.datasetName || `repo:${repo.fullName}`;
+    try {
+      await cogneeForget({
+        dataset: datasetName,
+        everything: true,
+      });
+    } catch (forgetErr: any) {
+      console.warn("cogneeForget failed during manual repo delete:", forgetErr.message);
     }
 
     await prisma.repository.delete({

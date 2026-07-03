@@ -14,11 +14,12 @@ export const env = createEnv({
     GITHUB_WEBHOOK_SECRET: z.string().min(1),
     GITHUB_CLIENT_ID: z.string().min(1),
     GITHUB_CLIENT_SECRET: z.string().min(1),
-    CLERK_SECRET_KEY: z.string().min(1),
+    // Clerk keys are optional — project uses NextAuth as primary auth
+    CLERK_SECRET_KEY: z.string().min(1).optional(),
     SENTRY_DSN: z.string().url().optional(),
   },
   client: {
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
     NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
   },
   runtimeEnv: {

@@ -4,6 +4,8 @@ import { verifyWebhookSignature } from "@/lib/github";
 import { ingestionQueue } from "@/server/queues";
 import { notificationEmitter } from "@/lib/notification-emitter";
 
+import { cogneeForget } from "@/lib/cognee-client";
+
 export async function POST(req: Request) {
   try {
     const rawBody = await req.text();
@@ -24,6 +26,7 @@ export async function POST(req: Request) {
       "issue_comment",
       "pull_request_review",
       "installation",
+      "installation_repositories",
     ];
 
     if (!allowedEvents.includes(eventType)) {
@@ -43,10 +46,28 @@ export async function POST(req: Request) {
     // Handle installation event for App Uninstallation
     if (eventType === "installation") {
       const action = payload.action;
-      if (action === "deleted") {
+      if (action === "deleted" || action === "suspend") {
         const installationId = String(payload.installation?.id);
         if (installationId) {
-          console.log(`[Webhook] GitHub App uninstalled. Deleting repositories for installationId: ${installationId}`);
+          console.log(`[Webhook] GitHub App uninstalled/suspended. Deleting repositories for installationId: ${installationId}`);
+          
+          const repos = await prisma.repository.findMany({
+            where: { githubInstallationId: installationId },
+            select: { datasetName: true, fullName: true }
+          });
+
+          for (const repo of repos) {
+            const datasetName = repo.datasetName || `repo:${repo.fullName}`;
+            try {
+              await cogneeForget({
+                dataset: datasetName,
+                everything: true,
+              });
+            } catch (forgetErr: any) {
+              console.warn(`[Webhook] cogneeForget failed for ${repo.fullName}:`, forgetErr.message);
+            }
+          }
+
           await prisma.repository.deleteMany({
             where: { githubInstallationId: installationId },
           });
@@ -54,6 +75,40 @@ export async function POST(req: Request) {
         }
       }
       return NextResponse.json({ received: true });
+    }
+
+    // Handle installation_repositories event (e.g. repo removed from app setup)
+    if (eventType === "installation_repositories") {
+      const action = payload.action;
+      if (action === "removed") {
+        const removedRepos = payload.repositories_removed || [];
+        for (const r of removedRepos) {
+          const githubRepoId = String(r.id);
+          console.log(`[Webhook] Repository ${r.full_name} removed from installation. Deleting from DB.`);
+          
+          const repo = await prisma.repository.findUnique({
+            where: { githubRepoId },
+            select: { datasetName: true, fullName: true }
+          });
+
+          if (repo) {
+            const datasetName = repo.datasetName || `repo:${repo.fullName}`;
+            try {
+              await cogneeForget({
+                dataset: datasetName,
+                everything: true,
+              });
+            } catch (forgetErr: any) {
+              console.warn(`[Webhook] cogneeForget failed for ${repo.fullName}:`, forgetErr.message);
+            }
+
+            await prisma.repository.delete({
+              where: { githubRepoId },
+            });
+          }
+        }
+      }
+      return NextResponse.json({ processed: true });
     }
 
     const githubRepoId = String(payload.repository?.id);

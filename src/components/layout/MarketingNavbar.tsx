@@ -41,6 +41,19 @@ export default function MarketingNavbar() {
   const isLoaded = status !== "loading";
   const isSignedIn = !!session;
   const user = session?.user;
+  const pathname = usePathname();
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (pathname === "/") {
+      e.preventDefault();
+      const id = href.replace("#", "");
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        setActiveSection(href);
+      }
+    }
+  };
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 8);
@@ -99,7 +112,16 @@ export default function MarketingNavbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
           {/* ── Logo ── */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0 group cursor-pointer">
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 shrink-0 group cursor-pointer"
+            onClick={(e) => {
+              if (pathname === "/") {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }}
+          >
             <div className="h-8 w-8 rounded-lg bg-[#161b22] border border-[#30363d] flex items-center justify-center text-[#2bee4b] shadow-[0_0_15px_rgba(43,238,75,0.12)] group-hover:border-[#2bee4b]/40 transition-colors duration-200">
               <BrainNetworkLogo className="h-5 w-5" />
             </div>
@@ -119,7 +141,7 @@ export default function MarketingNavbar() {
                     href={link.href}
                     className="relative px-4 py-1.5 text-sm font-semibold rounded-full transition-all duration-200 cursor-pointer group"
                     style={{ color: isActive ? "#ffffff" : "#8b949e" }}
-                    onClick={() => setActiveSection(link.href)}
+                    onClick={(e) => handleNavClick(e, link.href)}
                   >
                     {/* Active indicator — pill on top */}
                     {isActive && (
@@ -255,7 +277,7 @@ export default function MarketingNavbar() {
                   <motion.a
                     key={link.label}
                     href={link.href}
-                    onClick={() => { setMobileOpen(false); setActiveSection(link.href); }}
+                    onClick={(e) => { setMobileOpen(false); handleNavClick(e, link.href); }}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.04, duration: 0.2 }}
