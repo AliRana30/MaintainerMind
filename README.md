@@ -100,16 +100,55 @@ graph LR
 
 ```mermaid
 graph TD
-    GH[GitHub Repository] -->|Webhooks| API[Next.js API Routes]
-    API -->|Enqueue jobs| Queue[BullMQ Redis Queue]
-    Queue -->|Consume| Worker[Background Workers]
-    Worker -->|Persist metadata| DB[PostgreSQL]
-    Worker -->|remember| Cognee[Cognee Cloud]
-    Cognee -->|Constructs| KG[Knowledge Graph]
-    Dashboard[Web Dashboard] -->|Query stats| DB
-    Dashboard -->|recall| Cognee
-    Chat[AI Chat] -->|recall GRAPH_COMPLETION| Cognee
-    PRPanel[PR Insights] -->|recall| Cognee
+    subgraph Client [Client Tier]
+        Dashboard[Web Dashboard]
+        Chat[AI Chat Interface]
+        PRPanel[PR Insights Panel]
+    end
+
+    subgraph API [API Tier - Vercel]
+        WebhookRoute[Webhook API Route /api/webhooks/github]
+        AuthRoute[Auth API Routes /api/auth/*]
+        RepoRoute[Repo Management /api/repos/*]
+    end
+
+    subgraph Queues [Queue Tier - Upstash Redis]
+        BullMQ[(BullMQ Queues)]
+    end
+
+    subgraph Workers [Worker Tier - Render / Docker]
+        Registry[Worker Registry]
+        IngestWorker[Ingestion Worker]
+        EmbedWorker[Embedding Worker]
+        EnrichWorker[Enrichment Worker]
+    end
+
+    subgraph Storage [Data Tier]
+        Postgres[(PostgreSQL / Prisma)]
+        Cognee[(Cognee Cloud API / Knowledge Graph)]
+    end
+
+    GH[GitHub Repository] -->|Webhook Events| WebhookRoute
+    WebhookRoute -->|Validate & Enqueue| BullMQ
+    
+    Registry -->|Spawns| IngestWorker
+    Registry -->|Spawns| EmbedWorker
+    Registry -->|Spawns| EnrichWorker
+
+    BullMQ -->|Consume Jobs| IngestWorker
+    BullMQ -->|Consume Jobs| EmbedWorker
+    BullMQ -->|Consume Jobs| EnrichWorker
+
+    IngestWorker -->|Persist Metadata| Postgres
+    IngestWorker -->|remember()| Cognee
+    
+    EmbedWorker -->|improve()| Cognee
+    EnrichWorker -->|improve()| Cognee
+
+    Dashboard -->|Read Metadata| Postgres
+    Dashboard -->|forget() / recall()| Cognee
+    Chat -->|recall() GRAPH_COMPLETION| Cognee
+    PRPanel -->|recall() CHUNKS| Cognee
 ```
 
 ---
@@ -151,8 +190,8 @@ graph TD
 
 - Node.js 20+
 - Docker (for PostgreSQL and Redis)
-- A [Cognee Cloud](https://cognee.ai) account
-- A GitHub App ([setup guide below](#github-app-setup))
+- A Cognee Cloud account
+- A GitHub App (setup guide below)
 
 ### 1. Clone and install
 
@@ -232,7 +271,7 @@ npm run worker
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open http://localhost:3000.
 
 ### Optional: run Cognee locally
 
@@ -286,17 +325,23 @@ Navigate to Settings → Repositories. Disconnect a repository. Type the reposit
 ## Project Structure
 
 ```
-src/
-├── app/                  Next.js App Router pages and API routes
-├── components/           UI components
-├── lib/
-│   ├── cognee-client.ts  Typed Cognee Cloud API client (remember/recall/improve/forget)
-│   └── github.ts         Octokit GitHub App client
-├── workers/              BullMQ background job workers
-├── services/             Business logic layer
-├── hooks/                TanStack Query hooks
-├── types/                Shared TypeScript types
-└── prisma/               Schema and migrations
+├── prisma/               Prisma database schema and migrations
+├── public/               Static assets
+├── scripts/              Database seed scripts
+└── src/
+    ├── app/              Next.js Pages, Routing, and API routes
+    ├── components/       React UI components
+    ├── env.ts            Environment variables validation and configuration
+    ├── features/         Feature-specific modules (e.g., Knowledge Graph visualizer)
+    ├── lib/              Helper client libraries (Cognee, GitHub App rest, auth options)
+    ├── middleware.ts     NextAuth request routing middleware
+    ├── registry/         Reusable styling components registry (e.g., MagicUI elements)
+    ├── server/           Backend services, workers, queues, and jobs
+    │   ├── workers/      Background BullMQ workers for ingestion, embedding, and enrichment
+    │   ├── queues/       BullMQ queue definitions
+    │   ├── services/     Business services (repository sync, memory management, user management)
+    │   └── jobs/         Specific background job handlers
+    └── types/            Global TypeScript declarations
 ```
 
 ---
