@@ -300,28 +300,6 @@ MaintainerMind requires a GitHub App (not a plain OAuth App) to receive webhook 
 
 ---
 
-## Demo Script (3 minutes)
-
-**0:00 — Context**
-Open the Overview dashboard. Real repositories are listed with live sync status and knowledge commit counts. The Needs Attention feed surfaces real webhook-triggered alerts.
-
-**0:30 — remember()**
-Connect a repository. MaintainerMind triggers the GitHub App install flow, fetches the real repository list via Octokit, and begins backfilling PRs, issues, and commits via `remember()`. Watch the status transition from Syncing to Synced.
-
-**1:00 — recall()**
-Navigate to AI Chat. Select a synced repository. Ask: *"Why was synchronous ingestion removed?"* The response streams token by token. Citation chips reference real graph node IDs, PR numbers, and dates from the actual repository history.
-
-**1:45 — improve()**
-Click the thumbs-up on a citation. Navigate to Memory Evolution. Click *Run Enrichment Now*. The Memory Quality Score updates in real time, driven by the real `improve()` call response.
-
-**2:15 — Knowledge Graph**
-Navigate to the Knowledge Graph explorer. Select a node (PR, issue, commit, or decision). The right panel populates with real metadata. Click *Recall Graph Path* — a real traversal highlights the connected path across the canvas.
-
-**2:45 — forget()**
-Navigate to Settings → Repositories. Disconnect a repository. Type the repository name to confirm. That repository's nodes disappear from the Knowledge Graph. The Cognee dataset is cleared. Other repositories are unaffected.
-
----
-
 ## Project Structure
 
 ```
