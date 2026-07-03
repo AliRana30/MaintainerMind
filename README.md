@@ -6,7 +6,7 @@ MaintainerMind gives GitHub repositories persistent institutional knowledge. Eve
 
 When a new pull request opens, MaintainerMind recalls previous implementation decisions, similar bugs, related files, rejected approaches, and architectural discussions before the maintainer reads a single line of diff.
 
-Built for the [WeMakeDevs × Cognee Hackathon](https://www.wemakedevs.org/hackathons/cognee), June–July 2026.
+Built for the [WeMakeDevs x Cognee Hackathon](https://www.wemakedevs.org/hackathons/cognee), June-July 2026.
 
 ---
 
@@ -22,7 +22,7 @@ MaintainerMind treats this as a memory problem and solves it at the infrastructu
 
 ## Solution
 
-MaintainerMind listens to GitHub webhooks. Every repository event is processed through a background queue and stored in Cognee Cloud as a structured knowledge graph node. Each node carries typed metadata — PR outcome, files affected, author, timestamp, architectural category — and is linked to related nodes across the graph.
+MaintainerMind listens to GitHub webhooks. Every repository event is processed through a background queue and stored in Cognee Cloud as a structured knowledge graph node. Each node carries typed metadata - PR outcome, files affected, author, timestamp, architectural category - and is linked to related nodes across the graph.
 
 When a new pull request opens, the system performs semantic recall against this graph and surfaces relevant historical context: similar PRs, prior decisions on affected files, previously rejected approaches, and known regressions. Maintainers receive this context before they begin review.
 
@@ -46,6 +46,11 @@ Node types include pull requests, commits, issues, discussions, documentation, a
 
 Processing runs in the background. MaintainerMind polls dataset status until indexing completes before marking a repository as searchable.
 
+**Codebase reference:**
+- API Endpoint - `src/app/api/repos/route.ts`
+- Background Ingestion Worker - `src/server/workers/embedding.worker.ts`
+- Service Handler - `rememberGitHubContent()` in `src/server/services/memory.service.ts`
+
 ### recall()
 
 Semantic retrieval powers every query surface in the application:
@@ -58,24 +63,37 @@ Semantic retrieval powers every query surface in the application:
 
 Two retrieval strategies are used depending on context:
 
-- `GRAPH_COMPLETION` — for relationship traversal queries ("what decisions were made about authentication?")
-- `CHUNKS` — for fast similarity retrieval against raw content
+- `GRAPH_COMPLETION` - for relationship traversal queries ("what decisions were made about authentication?")
+- `CHUNKS` - for fast similarity retrieval against raw content
 
 Session IDs preserve conversational context across multi-turn chat.
 
+**Codebase reference:**
+- Graph Recall Path API - `src/app/api/repos/[repoId]/graph/recall/route.ts`
+- Chat Stream API - `src/app/api/chat/[sessionId]/message/route.ts`
+- Service Handler - `recallForPR()` / `recallForChat()` in `src/server/services/memory.service.ts`
+
 ### improve()
 
-Graph enrichment runs post-ingestion and on demand. Maintainers can trigger `improve()` from the Memory Evolution dashboard to re-weight entity relationships, rebuild semantic links, and improve retrieval accuracy over time. The Memory Quality Score on the dashboard reflects the real output of this operation — it is computed from recall accuracy (helpful/not-helpful feedback ratio), node freshness, and file coverage.
+Graph enrichment runs post-ingestion and on demand. Maintainers can trigger `improve()` from the Memory Evolution dashboard to re-weight entity relationships, rebuild semantic links, and improve retrieval accuracy over time. The Memory Quality Score on the dashboard reflects the real output of this operation - it is computed from recall accuracy (helpful/not-helpful feedback ratio), node freshness, and file coverage.
+
+**Codebase reference:**
+- API Endpoint - `src/app/api/repos/[repoId]/pr-insights/feedback/route.ts`
+- Service Handler - `triggerImprove()` in `src/server/services/memory.service.ts`
 
 ### forget()
 
 Large refactors can invalidate historical knowledge. Rather than deleting entire datasets, `forget()` removes stale node epochs while preserving raw repository data. This prevents obsolete architecture from influencing future AI responses. The Memory Evolution dashboard shows the last prune timestamp and nodes removed.
 
+**Codebase reference:**
+- API Endpoint - `src/app/api/memory/forget/route.ts`
+- Service Handler - `pruneDataset()` in `src/server/services/memory.service.ts`
+
 ---
 
 ## Knowledge Graph Structure
 
-Cognee builds a semantic graph connecting entities across the repository. This allows MaintainerMind to answer questions that keyword search cannot — understanding relationships between events, not just textual similarity.
+Cognee builds a semantic graph connecting entities across the repository. This allows MaintainerMind to answer questions that keyword search cannot - understanding relationships between events, not just textual similarity.
 
 ```mermaid
 graph LR
@@ -130,7 +148,7 @@ graph TD
 
     GH[GitHub Repository] -->|Webhook Events| WebhookRoute
     WebhookRoute -->|"Validate & Enqueue"| BullMQ
-    
+
     Registry -->|Spawns| IngestWorker
     Registry -->|Spawns| EmbedWorker
     Registry -->|Spawns| EnrichWorker
@@ -141,7 +159,7 @@ graph TD
 
     IngestWorker -->|Persist Metadata| Postgres
     IngestWorker -->|"remember()"| Cognee
-    
+
     EmbedWorker -->|"improve()"| Cognee
     EnrichWorker -->|"improve()"| Cognee
 
@@ -172,15 +190,15 @@ graph TD
 
 ## Technology Stack
 
-**Frontend** — Next.js 15, React 19, TypeScript, Tailwind CSS, Framer Motion, TanStack Query v5, Recharts, Lenis
+**Frontend** - Next.js 15, React 19, TypeScript, Tailwind CSS, Framer Motion, TanStack Query v5, Recharts, Lenis
 
-**Backend** — Next.js API Routes, BullMQ, Redis, PostgreSQL, Prisma, Octokit
+**Backend** - Next.js API Routes, BullMQ, Redis, PostgreSQL, Prisma, Octokit
 
-**AI Memory** — Cognee Cloud, OpenAI
+**AI Memory** - Cognee Cloud, OpenAI
 
-**Auth** — Clerk, GitHub OAuth, Google OAuth, NextAuth.js
+**Auth** - Clerk, GitHub OAuth, Google OAuth, NextAuth.js
 
-**Deployment** — Docker, Docker Compose, Vercel
+**Deployment** - Docker, Docker Compose, Vercel
 
 ---
 
@@ -264,10 +282,10 @@ npm run seed
 ### 5. Start the worker and dev server
 
 ```bash
-# Terminal 1 — background job worker
+# Terminal 1 - background job worker
 npm run worker
 
-# Terminal 2 — Next.js dev server
+# Terminal 2 - Next.js dev server
 npm run dev
 ```
 
@@ -290,7 +308,7 @@ Then set `COGNEE_BASE_URL=http://localhost:8000` in your `.env.local`.
 
 MaintainerMind requires a GitHub App (not a plain OAuth App) to receive webhook events and access repository data.
 
-1. Go to **GitHub Settings → Developer settings → GitHub Apps → New GitHub App**
+1. Go to **GitHub Settings -> Developer settings -> GitHub Apps -> New GitHub App**
 2. Set the webhook URL to `https://your-domain.com/api/webhooks/github`
 3. Generate a webhook secret and copy it to `GITHUB_WEBHOOK_SECRET`
 4. Set these repository permissions: Contents (read), Issues (read), Pull requests (read), Metadata (read)
@@ -328,12 +346,12 @@ MaintainerMind requires a GitHub App (not a plain OAuth App) to receive webhook 
 
 - [Cognee repository](https://github.com/topoteretes/cognee)
 - [Cognee documentation](https://docs.cognee.ai)
-- [WeMakeDevs × Cognee Hackathon](https://www.wemakedevs.org/hackathons/cognee)
+- [WeMakeDevs x Cognee Hackathon](https://www.wemakedevs.org/hackathons/cognee)
 
 ---
 
 ## Author
 
-Ali Rana — [AliRana30](https://github.com/AliRana30)
+Ali Rana - [AliRana30](https://github.com/AliRana30)
 
-*Built for the WeMakeDevs × Cognee Hackathon, June–July 2026.*
+*Built for the WeMakeDevs x Cognee Hackathon, June-July 2026.*
