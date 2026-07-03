@@ -191,7 +191,18 @@ export default function MarketingNavbar() {
                       className="w-8 h-8 rounded-full border border-[#30363d] hover:border-[#2bee4b]/50 transition-colors cursor-pointer overflow-hidden flex items-center justify-center bg-[#161b22]"
                       title="Sign Out"
                     >
-                      <img src={user?.image || "https://github.com/identicons/maintainermind.png"} alt={user?.name || "User"} className="w-full h-full object-cover" />
+                      <img
+                        src={user?.image || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='16' fill='%236E56F2'/%3E%3Ctext x='16' y='21' text-anchor='middle' font-family='sans-serif' font-size='14' font-weight='bold' fill='white'%3E${encodeURIComponent((user?.name || 'U').charAt(0).toUpperCase())}%3C/text%3E%3C/svg%3E`}
+                        alt={user?.name || "User"}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const t = e.target as HTMLImageElement;
+                          if (!t.src.startsWith('data:')) {
+                            const initial = encodeURIComponent((user?.name || 'U').charAt(0).toUpperCase());
+                            t.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='16' fill='%236E56F2'/%3E%3Ctext x='16' y='21' text-anchor='middle' font-family='sans-serif' font-size='14' font-weight='bold' fill='white'%3E${initial}%3C/text%3E%3C/svg%3E`;
+                          }
+                        }}
+                      />
                     </button>
                   </>
                 ) : (
@@ -223,7 +234,18 @@ export default function MarketingNavbar() {
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="w-7 h-7 rounded-full border border-[#30363d] cursor-pointer overflow-hidden flex items-center justify-center bg-[#161b22]"
               >
-                <img src={user?.image || "https://github.com/identicons/maintainermind.png"} alt={user?.name || "User"} className="w-full h-full object-cover" />
+                <img
+                  src={user?.image || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='14' fill='%236E56F2'/%3E%3Ctext x='14' y='19' text-anchor='middle' font-family='sans-serif' font-size='13' font-weight='bold' fill='white'%3E${encodeURIComponent((user?.name || 'U').charAt(0).toUpperCase())}%3C/text%3E%3C/svg%3E`}
+                  alt={user?.name || "User"}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const t = e.target as HTMLImageElement;
+                    if (!t.src.startsWith('data:')) {
+                      const initial = encodeURIComponent((user?.name || 'U').charAt(0).toUpperCase());
+                      t.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='14' fill='%236E56F2'/%3E%3Ctext x='14' y='19' text-anchor='middle' font-family='sans-serif' font-size='13' font-weight='bold' fill='white'%3E${initial}%3C/text%3E%3C/svg%3E`;
+                    }
+                  }}
+                />
               </button>
             )}
             <motion.button

@@ -119,6 +119,20 @@ function KnowledgeGraphPageContent() {
   const [selectedLayout, setSelectedLayout] = useState("force");
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  // Start collapsed; useEffect will expand on desktop after first paint
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setFiltersExpanded(!mobile);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Use TanStack Query to fetch Graph Data, ensuring it re-fetches when repoId or filters change
   const { data: graphQueryData, isLoading: queryIsLoading, isFetching: queryIsFetching } = useQuery({
@@ -887,111 +901,141 @@ function KnowledgeGraphPageContent() {
 
             {/* Left Filter & Controls Panel */}
             <motion.div 
+              layout
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.15, duration: 0.25, ease: [0.2, 0, 0, 1] }}
-              className="absolute left-4 top-4 bg-[#F0ECF5] border border-[#E4E1EC] rounded-2xl p-3 w-56 shadow-m3-l1 z-20 space-y-4 text-left"
+              className={`absolute left-4 top-4 bg-[#F0ECF5] border border-[#E4E1EC] rounded-2xl shadow-m3-l1 z-20 text-left transition-all duration-200 ${
+                filtersExpanded ? "w-56 p-3 space-y-4" : "w-10 h-10 p-0 flex items-center justify-center rounded-full cursor-pointer hover:bg-[#EBE7FF] hover:border-[#6E56F2]"
+              }`}
+              onClick={() => {
+                if (!filtersExpanded) {
+                  setFiltersExpanded(true);
+                }
+              }}
             >
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#79747E]" />
-                <input 
-                  type="text"
-                  placeholder="Search nodes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-[#FBFAFE] border border-[#E4E1EC] focus:border-[#6E56F2] rounded-xl text-xs text-[#1C1B1F] placeholder-[#79747E] outline-none transition-all"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-[#79747E] block">Node Types</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {Object.keys(visibleTypes).map((type) => {
-                    const isVisible = visibleTypes[type];
-                    return (
-                      <button
-                        key={type}
-                        onClick={() => toggleNodeType(type)}
-                        className={`px-2 py-1 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
-                          isVisible 
-                            ? "bg-[#EBE7FF] border-[#6E56F2] text-[#21005D]" 
-                            : "bg-transparent border-[#E4E1EC] text-[#79747E] opacity-50"
-                        }`}
-                      >
-                        {type.replace(/([A-Z])/g, " $1")}
-                      </button>
-                    );
-                  })}
+              {!filtersExpanded ? (
+                <div className="flex items-center justify-center w-full h-full">
+                  <Search className="h-4.5 w-4.5 text-[#49454F]" />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-[#79747E] block">Time Range</span>
-                <div className="flex gap-1 bg-[#FBFAFE] border border-[#E4E1EC] rounded-xl p-0.5">
-                  {["7d", "30d", "90d", "all"].map((range) => (
-                    <button
-                      key={range}
-                      onClick={() => setTimeRange(range)}
-                      className={`flex-1 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
-                        timeRange === range 
-                          ? "bg-[#EBE7FF] text-[#6E56F2] border border-[#E4E1EC]" 
-                          : "text-[#49454F] hover:text-[#1C1B1F]"
-                      }`}
-                    >
-                      {range}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-[#79747E] block">Layout Engine</span>
-                <div className="flex gap-1 bg-[#FBFAFE] border border-[#E4E1EC] rounded-xl p-0.5">
-                  {["force", "dagre", "radial"].map((lay) => (
-                    <button
-                      key={lay}
-                      onClick={() => handleLayoutChange(lay)}
-                      className={`flex-1 py-1 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer ${
-                        selectedLayout === lay 
-                          ? "bg-[#EBE7FF] text-[#6E56F2] border border-[#E4E1EC]" 
-                          : "text-[#49454F] hover:text-[#1C1B1F]"
-                      }`}
-                    >
-                      {lay}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Shape + Color Legend Strip */}
-              <div className="space-y-1.5 pt-1 border-t border-[#E4E1EC]">
-                <span className="text-[8px] font-bold uppercase tracking-wider text-[#79747E] block">Legend</span>
-                <div className="grid grid-cols-2 gap-x-2 gap-y-2 text-[9px] font-semibold text-[#49454F]">
-                  {([
-                    { type: "pullRequest", color: "#6E56F2", label: "PR", shape: "hex" },
-                    { type: "issue", color: "#D78B00", label: "Issue", shape: "circle" },
-                    { type: "commit", color: "#79747E", label: "Commit", shape: "tri" },
-                    { type: "decision", color: "#6E56F2", label: "Decision", shape: "diamond" },
-                    { type: "contributor", color: "#E3589B", label: "Contrib", shape: "star" },
-                    { type: "file", color: "#0091EA", label: "File", shape: "square" },
-                  ] as const).map(({ type, color, label, shape }) => (
-                    <div key={type} className="flex items-center gap-1.5">
-                      <svg width="12" height="12" viewBox="-7 -7 14 14">
-                        {renderNodeShape(type, 5.5, color, false, false)}
-                      </svg>
-                      <span>{label}</span>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#79747E]" />
+                      <input 
+                        type="text"
+                        placeholder="Search nodes..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-8 pr-3 py-1.5 bg-[#FBFAFE] border border-[#E4E1EC] focus:border-[#6E56F2] rounded-xl text-xs text-[#1C1B1F] placeholder-[#79747E] outline-none transition-all"
+                        onClick={(e) => e.stopPropagation()}
+                      />
                     </div>
-                  ))}
-                </div>
-              </div>
+                    {isMobile && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFiltersExpanded(false);
+                        }}
+                        className="p-1.5 rounded-xl border border-[#E4E1EC] bg-[#FBFAFE] text-[#49454F] hover:bg-[#EBE7FF] hover:text-[#1C1B1F] transition-colors cursor-pointer shrink-0"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
 
-              <button
-                onClick={simulateRecallTraversal}
-                disabled={traversalActive}
-                className="w-full py-1.5 rounded-full bg-[#6E56F2]/10 border border-[#6E56F2]/20 hover:border-[#6E56F2]/40 text-[#6E56F2] text-[10px] font-extrabold uppercase tracking-wide transition-all cursor-pointer disabled:opacity-50"
-              >
-                {traversalActive ? "Traversing..." : "Recall Graph Path"}
-              </button>
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#79747E] block">Node Types</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.keys(visibleTypes).map((type) => {
+                        const isVisible = visibleTypes[type];
+                        return (
+                          <button
+                            key={type}
+                            onClick={() => toggleNodeType(type)}
+                            className={`px-2 py-1 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                              isVisible 
+                                ? "bg-[#EBE7FF] border-[#6E56F2] text-[#21005D]" 
+                                : "bg-transparent border-[#E4E1EC] text-[#79747E] opacity-50"
+                            }`}
+                          >
+                            {type.replace(/([A-Z])/g, " $1")}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#79747E] block">Time Range</span>
+                    <div className="flex gap-1 bg-[#FBFAFE] border border-[#E4E1EC] rounded-xl p-0.5">
+                      {["7d", "30d", "90d", "all"].map((range) => (
+                        <button
+                          key={range}
+                          onClick={() => setTimeRange(range)}
+                          className={`flex-1 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
+                            timeRange === range 
+                              ? "bg-[#EBE7FF] text-[#6E56F2] border border-[#E4E1EC]" 
+                              : "text-[#49454F] hover:text-[#1C1B1F]"
+                          }`}
+                        >
+                          {range}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#79747E] block">Layout Engine</span>
+                    <div className="flex gap-1 bg-[#FBFAFE] border border-[#E4E1EC] rounded-xl p-0.5">
+                      {["force", "dagre", "radial"].map((lay) => (
+                        <button
+                          key={lay}
+                          onClick={() => handleLayoutChange(lay)}
+                          className={`flex-1 py-1 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer ${
+                            selectedLayout === lay 
+                              ? "bg-[#EBE7FF] text-[#6E56F2] border border-[#E4E1EC]" 
+                              : "text-[#49454F] hover:text-[#1C1B1F]"
+                          }`}
+                        >
+                          {lay}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Shape + Color Legend Strip */}
+                  <div className="space-y-1.5 pt-1 border-t border-[#E4E1EC]">
+                    <span className="text-[8px] font-bold uppercase tracking-wider text-[#79747E] block">Legend</span>
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-2 text-[9px] font-semibold text-[#49454F]">
+                      {([
+                        { type: "pullRequest", color: "#6E56F2", label: "PR", shape: "hex" },
+                        { type: "issue", color: "#D78B00", label: "Issue", shape: "circle" },
+                        { type: "commit", color: "#79747E", label: "Commit", shape: "tri" },
+                        { type: "decision", color: "#6E56F2", label: "Decision", shape: "diamond" },
+                        { type: "contributor", color: "#E3589B", label: "Contrib", shape: "star" },
+                        { type: "file", color: "#0091EA", label: "File", shape: "square" },
+                      ] as const).map(({ type, color, label, shape }) => (
+                        <div key={type} className="flex items-center gap-1.5">
+                          <svg width="12" height="12" viewBox="-7 -7 14 14">
+                            {renderNodeShape(type, 5.5, color, false, false)}
+                          </svg>
+                          <span>{label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={simulateRecallTraversal}
+                    disabled={traversalActive}
+                    className="w-full py-1.5 rounded-full bg-[#6E56F2]/10 border border-[#6E56F2]/20 hover:border-[#6E56F2]/40 text-[#6E56F2] text-[10px] font-extrabold uppercase tracking-wide transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {traversalActive ? "Traversing..." : "Recall Graph Path"}
+                  </button>
+                </>
+              )}
             </motion.div>
 
             {/* Viewport Zoom & Export Tools */}

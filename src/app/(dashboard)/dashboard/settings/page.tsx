@@ -74,7 +74,7 @@ export default function SettingsPage() {
   // State for Danger Zone Panel
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [confirmDeleteText, setConfirmDeleteText] = useState("");
-  
+
   // Custom toast notification
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -113,23 +113,6 @@ export default function SettingsPage() {
     },
   });
   const apiKeys = keysData?.apiKeys || [];
-
-  // Mutation to update user name/avatar
-  const updateUserMutation = useMutation({
-    mutationFn: async (payload: Partial<UserData>) => {
-      const res = await fetch("/api/user", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("Failed to update user profile");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-settings-data"] });
-      showToast("Profile settings updated successfully!");
-    },
-  });
 
   // Mutation to update user preferences (notification toggles)
   const updatePreferencesMutation = useMutation({
@@ -257,30 +240,13 @@ export default function SettingsPage() {
             Navigation
           </span>
 
-          {/* Account Button */}
-          <button
-            onClick={() => setActivePanel("account")}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all text-left relative cursor-pointer ${
-              activePanel === "account"
-                ? "bg-[#EBE7FF] text-[#6E56F2]"
-                : "text-[#49454F] hover:bg-[#F0ECF5]/50"
-            }`}
-          >
-            {activePanel === "account" && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-[#6E56F2] rounded-r" />
-            )}
-            <User className="w-4 h-4 text-[#6E56F2]" />
-            <span>Account Profile</span>
-          </button>
-
           {/* Repositories Button */}
           <button
             onClick={() => setActivePanel("repositories")}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all text-left relative cursor-pointer ${
-              activePanel === "repositories"
-                ? "bg-[#EBE7FF] text-[#6E56F2]"
-                : "text-[#49454F] hover:bg-[#F0ECF5]/50"
-            }`}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all text-left relative cursor-pointer ${activePanel === "repositories"
+              ? "bg-[#EBE7FF] text-[#6E56F2]"
+              : "text-[#49454F] hover:bg-[#F0ECF5]/50"
+              }`}
           >
             {activePanel === "repositories" && (
               <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-[#6E56F2] rounded-r" />
@@ -292,11 +258,10 @@ export default function SettingsPage() {
           {/* Notifications Button */}
           <button
             onClick={() => setActivePanel("notifications")}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all text-left relative cursor-pointer ${
-              activePanel === "notifications"
-                ? "bg-[#EBE7FF] text-[#6E56F2]"
-                : "text-[#49454F] hover:bg-[#F0ECF5]/50"
-            }`}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all text-left relative cursor-pointer ${activePanel === "notifications"
+              ? "bg-[#EBE7FF] text-[#6E56F2]"
+              : "text-[#49454F] hover:bg-[#F0ECF5]/50"
+              }`}
           >
             {activePanel === "notifications" && (
               <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-[#6E56F2] rounded-r" />
@@ -308,11 +273,10 @@ export default function SettingsPage() {
           {/* API Keys Button */}
           <button
             onClick={() => setActivePanel("apikeys")}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all text-left relative cursor-pointer ${
-              activePanel === "apikeys"
-                ? "bg-[#EBE7FF] text-[#6E56F2]"
-                : "text-[#49454F] hover:bg-[#F0ECF5]/50"
-            }`}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all text-left relative cursor-pointer ${activePanel === "apikeys"
+              ? "bg-[#EBE7FF] text-[#6E56F2]"
+              : "text-[#49454F] hover:bg-[#F0ECF5]/50"
+              }`}
           >
             {activePanel === "apikeys" && (
               <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-[#6E56F2] rounded-r" />
@@ -324,11 +288,10 @@ export default function SettingsPage() {
           {/* Danger Zone Button */}
           <button
             onClick={() => setActivePanel("dangerzone")}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all text-left relative cursor-pointer ${
-              activePanel === "dangerzone"
-                ? "bg-[#F8D7DA] text-[#842029]"
-                : "text-[#842029] opacity-80 hover:bg-[#F8D7DA]/50"
-            }`}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all text-left relative cursor-pointer ${activePanel === "dangerzone"
+              ? "bg-[#F8D7DA] text-[#842029]"
+              : "text-[#842029] opacity-80 hover:bg-[#F8D7DA]/50"
+              }`}
           >
             {activePanel === "dangerzone" && (
               <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-[#842029] rounded-r" />
@@ -341,66 +304,6 @@ export default function SettingsPage() {
         {/* ─── RIGHT CONTENT PANELS (md:col-span-9) ─── */}
         <div className="md:col-span-9 bg-[#FBFAFE] rounded-xl border border-[#E4E1EC] p-5 shadow-inner">
           <AnimatePresence mode="wait">
-            {/* PANEL 1: ACCOUNT PROFILE */}
-            {activePanel === "account" && (
-              <motion.div
-                key="account"
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 8 }}
-                transition={SPRING_SOFT}
-                className="space-y-5"
-              >
-                <div>
-                  <h2 className="text-sm font-bold text-[#1C1B1F]">Profile Settings</h2>
-                  <p className="text-[11px] text-[#49454F] mt-0.5">
-                    Manage your personal account identifier details.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-4 p-4 bg-[#E8F8F0] border border-[#CBEEDC] rounded-xl">
-                  <img
-                    src={user?.avatarUrl || "https://github.com/identicons/maintainermind.png"}
-                    alt={nameVal}
-                    className="w-12 h-12 rounded-full border-2 border-[#6E56F2] bg-[#FBFAFE]"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "https://github.com/identicons/maintainermind.png";
-                    }}
-                  />
-                  <div>
-                    <span className="text-xs font-bold block text-[#1C1B1F]">{user?.name}</span>
-                    <span className="text-[10px] text-[#49454F]">{user?.email}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-4 max-w-md">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-[#79747E] tracking-wider block">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      value={nameVal}
-                      onChange={(e) => setNameVal(e.target.value)}
-                      className="w-full h-9 px-3 bg-[#FBFAFE] border border-[#E4E1EC] rounded-lg text-xs text-[#1C1B1F] placeholder-[#79747E] focus:border-[#6E56F2] outline-none"
-                    />
-                  </div>
-
-                  <button
-                    onClick={() => updateUserMutation.mutate({ name: nameVal })}
-                    disabled={updateUserMutation.isPending}
-                    className="h-9 px-5 bg-gradient-to-b from-[#8C76FF] to-[#6E56F2] hover:opacity-95 text-white text-xs font-bold rounded-lg shadow-m3-l1 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 mt-2"
-                  >
-                    {updateUserMutation.isPending ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      "Save Changes"
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
             {/* PANEL 2: REPOSITORIES */}
             {activePanel === "repositories" && (
               <motion.div

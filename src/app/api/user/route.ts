@@ -28,7 +28,7 @@ export async function GET(req: Request) {
         id: dbUser.id,
         name: dbUser.name || "Alex Maintainer",
         email: dbUser.email,
-        avatarUrl: dbUser.avatarUrl || "https://github.com/identicons/maintainermind.png",
+        avatarUrl: dbUser.avatarUrl || null,
         plan: dbUser.plan,
         preferences: {
           syncFailures: prefSyncFailures,

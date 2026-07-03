@@ -63,6 +63,11 @@ export default function ChatSessionPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // 1. Fetch connected repos for mention trigger
   const { data: reposData } = useQuery({
@@ -109,7 +114,9 @@ export default function ChatSessionPage() {
 
   // Auto-scroll to bottom
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   };
   useEffect(() => {
     scrollToBottom();
@@ -408,7 +415,10 @@ export default function ChatSessionPage() {
       </div>
 
       {/* ─── CHAT THREAD ─── */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-w-3xl w-full mx-auto pb-28">
+      <div 
+        ref={chatContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4 max-w-3xl w-full mx-auto pb-28"
+      >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
             <div className="w-12 h-12 rounded-full bg-[#6E56F2]/10 border border-[#6E56F2]/20 flex items-center justify-center">

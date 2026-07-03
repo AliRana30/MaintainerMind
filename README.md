@@ -107,9 +107,9 @@ graph TD
     end
 
     subgraph API [API Tier - Vercel]
-        WebhookRoute[Webhook API Route /api/webhooks/github]
-        AuthRoute[Auth API Routes /api/auth/*]
-        RepoRoute[Repo Management /api/repos/*]
+        WebhookRoute["Webhook API Route /api/webhooks/github"]
+        AuthRoute["Auth API Routes /api/auth/*"]
+        RepoRoute["Repo Management /api/repos/*"]
     end
 
     subgraph Queues [Queue Tier - Upstash Redis]
@@ -129,7 +129,7 @@ graph TD
     end
 
     GH[GitHub Repository] -->|Webhook Events| WebhookRoute
-    WebhookRoute -->|Validate & Enqueue| BullMQ
+    WebhookRoute -->|"Validate & Enqueue"| BullMQ
     
     Registry -->|Spawns| IngestWorker
     Registry -->|Spawns| EmbedWorker
@@ -140,15 +140,15 @@ graph TD
     BullMQ -->|Consume Jobs| EnrichWorker
 
     IngestWorker -->|Persist Metadata| Postgres
-    IngestWorker -->|remember()| Cognee
+    IngestWorker -->|"remember()"| Cognee
     
-    EmbedWorker -->|improve()| Cognee
-    EnrichWorker -->|improve()| Cognee
+    EmbedWorker -->|"improve()"| Cognee
+    EnrichWorker -->|"improve()"| Cognee
 
     Dashboard -->|Read Metadata| Postgres
-    Dashboard -->|forget() / recall()| Cognee
-    Chat -->|recall() GRAPH_COMPLETION| Cognee
-    PRPanel -->|recall() CHUNKS| Cognee
+    Dashboard -->|"forget() / recall()"| Cognee
+    Chat -->|"recall() GRAPH_COMPLETION"| Cognee
+    PRPanel -->|"recall() CHUNKS"| Cognee
 ```
 
 ---

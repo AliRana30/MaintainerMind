@@ -127,7 +127,7 @@ export default function Sidebar() {
         )}
       </AnimatePresence>
 
-      <aside className={`fixed lg:static left-0 top-0 bottom-0 h-screen bg-[#F5F2FA]/30 border-r border-[#E4E1EC] flex flex-col justify-between z-50 select-none shrink-0 transition-transform duration-150 ease-out lg:translate-x-0 ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      <aside className={`fixed lg:static left-0 top-0 bottom-0 h-screen bg-[#F5F2FA] border-r border-[#E4E1EC] flex flex-col justify-between z-50 select-none shrink-0 transition-transform duration-150 ease-out lg:translate-x-0 ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } ${sidebarCollapsed ? "lg:w-20" : "lg:w-[260px]"} w-[260px]`}>
         <div className="flex flex-col h-full">
           <div className="h-16 border-b border-[#E4E1EC] flex items-center px-4 justify-between overflow-hidden">

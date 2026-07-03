@@ -91,15 +91,17 @@ export async function GET(req: NextRequest) {
         } catch (e) {
           clearInterval(keepAlive);
           notificationEmitter.off("notification", onNotification);
-          subClient.unsubscribe("notifications").catch(() => { });
-          subClient.disconnect().catch(() => { });
+          subClient.unsubscribe("notifications");
+          subClient.disconnect();
         }
       }, 30000);
 
       req.signal.addEventListener("abort", () => {
         clearInterval(keepAlive);
         notificationEmitter.off("notification", onNotification);
+        // @ts-ignore
         subClient.unsubscribe("notifications").catch(() => { });
+        // @ts-ignore
         subClient.disconnect().catch(() => { });
         try {
           controller.close();
