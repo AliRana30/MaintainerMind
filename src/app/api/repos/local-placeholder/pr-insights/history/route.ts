@@ -12,8 +12,7 @@ interface DailyHistoryPoint {
 }
 
 export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ repoId: string }> }
+  req: Request
 ) {
   try {
     const { userId } = await auth();
@@ -21,7 +20,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { repoId } = await params;
+    const repoId = "local-placeholder";
 
     // Resolve repository from DB
     const repo = await prisma.repository.findUnique({
