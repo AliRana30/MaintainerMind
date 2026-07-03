@@ -133,7 +133,7 @@ export default function Sidebar() {
           <div className="h-16 border-b border-[#E4E1EC] flex items-center px-4 justify-between overflow-hidden">
             <Link href="/dashboard" className="flex items-center gap-3 group min-w-0" onClick={() => setMobileSidebarOpen(false)}>
               <img
-                src="/maintainermind.png"
+                src="/MaintainerMind.png"
                 alt="MaintainerMind"
                 className="w-7 h-7 rounded-lg object-contain shrink-0"
               />

@@ -22,10 +22,10 @@ export const metadata: Metadata = {
     "Integrate long-term cognitive knowledge-graph memory directly into your repository with Cognee Cloud.",
   icons: {
     icon: [
-      { url: "/maintainermind.png", type: "image/png" },
+      { url: "/MaintainerMind.png", type: "image/png" },
     ],
-    apple: "/maintainermind.png",
-    shortcut: "/maintainermind.png",
+    apple: "/MaintainerMind.png",
+    shortcut: "/MaintainerMind.png",
   },
 };
 
