@@ -100,6 +100,7 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error("Failed to fetch repositories");
       return res.json();
     },
+    refetchInterval: 10000,
   });
   const repos = reposData?.repositories || [];
 

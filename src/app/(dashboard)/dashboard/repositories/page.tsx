@@ -45,7 +45,8 @@ export default function RepositoriesPage() {
       }
       const json = await res.json();
       return json.repositories || [];
-    }
+    },
+    refetchInterval: 10000,
   });
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");

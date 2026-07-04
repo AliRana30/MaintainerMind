@@ -140,7 +140,8 @@ export async function DELETE(req: NextRequest) {
     });
 
     if (!repo) {
-      return NextResponse.json({ error: "Repository not found or access denied" }, { status: 404 });
+      // If the repo is already deleted (e.g. via background webhook), treat as a success to avoid UI errors
+      return NextResponse.json({ success: true, message: "Repository already disconnected" });
     }
 
     const datasetName = repo.datasetName || `repo:${repo.fullName}`;

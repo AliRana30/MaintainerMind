@@ -49,7 +49,8 @@ export async function POST(
     }
 
     if (!foundRepo) {
-      return NextResponse.json({ error: "Repository not found" }, { status: 404 });
+      // If the repo is already deleted (e.g. via background webhook), treat as a success to avoid UI errors
+      return NextResponse.json({ success: true, message: "Repository already disconnected" });
     }
     const repo = foundRepo;
 
