@@ -4,6 +4,7 @@ import { createAppAuth } from "@octokit/auth-app";
 import { PrismaClient } from "@prisma/client";
 import { rememberGitHubContent } from "../services/memory.service"; // assuming memory.service handles cognee.remember calls
 import { enrichmentQueue } from "../queues";
+import { redis } from "@/lib/redis";
 
 const prisma = new PrismaClient();
 
@@ -251,10 +252,7 @@ export const backfillWorker = new Worker(
     }
   },
   {
-    connection: {
-      host: process.env.REDIS_HOST || "localhost",
-      port: parseInt(process.env.REDIS_PORT || "6379"),
-    },
+    connection: redis,
   }
 );
 

@@ -77,7 +77,7 @@ export async function GET(
       const coverageRatio = commitsCount > 0 ? Math.min(nodeCount / (commitsCount * 3), 1.0) : 0;
       const wCoverage = coverageRatio * 100 * 0.3;
 
-      const freshnessSource = repo?.lastEnrichedAt || dataset.updatedAt;
+      const freshnessSource = repo?.lastEnrichedAt || dataset?.updatedAt || new Date();
       const daysSinceUpdate = (Date.now() - new Date(freshnessSource).getTime()) / (1000 * 60 * 60 * 24);
       const freshnessRatio = Math.max(0, 1 - (daysSinceUpdate / FRESH_WINDOW_DAYS));
       const wFreshness = freshnessRatio * 100 * 0.2;
@@ -295,6 +295,10 @@ export async function GET(
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("Failed to fetch memory evolution stats", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      error: error.message, 
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      repoIdParams: typeof req.url // Just to have some debug info
+    }, { status: 500 });
   }
 }

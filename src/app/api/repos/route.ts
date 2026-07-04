@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { rememberGitHubContent } from "@/server/services/memory.service";
 import { cogneeForget } from "@/lib/cognee-client";
 
+export const dynamic = "force-dynamic";
+
 async function getOrCreateUser(req: NextRequest) {
   let sessionUserId = req.headers.get("x-user-id") || req.cookies.get("session")?.value;
   let dbUser = null;
