@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     const sessionUserId = token?.id as string | undefined;
     const expectedUserId = decodeURIComponent(state);
 
-    let targetUserId = sessionUserId || expectedUserId;
+    let targetUserId: string | undefined = sessionUserId || expectedUserId;
 
     if (!targetUserId || targetUserId === "null" || targetUserId === "undefined") {
       const dbUser = await prisma.user.findFirst();
