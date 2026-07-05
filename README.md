@@ -368,6 +368,11 @@ MaintainerMind requires a GitHub App (not a plain OAuth App) to receive webhook 
 
 ---
 
+## AI Tools Used
+- **Antigravity**: for helping me in building this project
+- **Cognee**: a Knowledge Graph Memory Platform
+- **Claude Sonnet 4.5**: for generation of images and other assets
+
 ## Author
 
 Ali Rana - [AliRana30](https://github.com/AliRana30)
