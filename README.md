@@ -228,8 +228,13 @@ cp .env.example .env.local
 Fill in `.env.local`:
 
 ```env
-# Database
+# Database (Local)
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/maintainermind?schema=public"
+
+# Database (Production / Supabase on Vercel)
+# IMPORTANT: When deploying to Vercel with Supabase, you MUST use the Transaction pooler URL (port 6543)
+# and append ?pgbouncer=true&connection_limit=1 to prevent Prisma 500 connection errors.
+# DATABASE_URL="postgresql://postgres.your_project:YOUR_PASSWORD@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
 
 # Redis
 REDIS_URL="redis://localhost:6379"
