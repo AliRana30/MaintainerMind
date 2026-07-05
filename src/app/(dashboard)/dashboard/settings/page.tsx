@@ -463,7 +463,7 @@ export default function SettingsPage() {
                   <span className="text-[10px] font-bold uppercase text-[#79747E] tracking-wider block">
                     Create New Key
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <input
                       type="text"
                       placeholder="Production API Key Name"
@@ -474,7 +474,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => generateKeyMutation.mutate(newKeyName)}
                       disabled={!newKeyName.trim() || generateKeyMutation.isPending}
-                      className="h-9 px-4 bg-[#6E56F2] hover:bg-[#5B45D5] text-white text-xs font-bold rounded-lg shadow-m3-l1 transition-colors cursor-pointer flex items-center justify-center"
+                      className="h-9 px-4 shrink-0 bg-[#6E56F2] hover:bg-[#5B45D5] text-white text-xs font-bold rounded-lg shadow-m3-l1 transition-colors cursor-pointer flex items-center justify-center w-full sm:w-auto"
                     >
                       {generateKeyMutation.isPending ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
