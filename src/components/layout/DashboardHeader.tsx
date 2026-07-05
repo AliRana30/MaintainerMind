@@ -391,11 +391,11 @@ export default function DashboardHeader() {
     }
   };
 
-  const filteredRepos = repos.filter((repo) =>
+  const filteredRepos = repos.filter((repo: any) =>
     repo.fullName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const activeRepoObj = repos.find(r => r.fullName === selectedRepo);
+  const activeRepoObj = repos.find((r: any) => r.fullName === selectedRepo);
   const isSyncing = activeRepoObj?.status === "SYNCING" || (selectedRepo && selectedRepo.toLowerCase().includes("tailwind"));
 
   return (
@@ -643,12 +643,12 @@ export default function DashboardHeader() {
               </div>
 
               <div className="max-h-[350px] overflow-y-auto p-2 space-y-4">
-                {repos.filter(r => commandQuery === "" || r.fullName.toLowerCase().includes(commandQuery.toLowerCase())).length > 0 && (
+                {repos.filter((r: any) => commandQuery === "" || r.fullName.toLowerCase().includes(commandQuery.toLowerCase())).length > 0 && (
                   <div className="space-y-1">
                     <div className="text-[10px] font-semibold text-[#49454F] px-2.5 uppercase tracking-wider">Repositories</div>
                     {repos
-                      .filter(r => commandQuery === "" || r.fullName.toLowerCase().includes(commandQuery.toLowerCase()))
-                      .map((repo) => (
+                      .filter((r: any) => commandQuery === "" || r.fullName.toLowerCase().includes(commandQuery.toLowerCase()))
+                      .map((repo: any) => (
                         <button
                           key={repo.fullName}
                           onClick={() => {
@@ -668,12 +668,12 @@ export default function DashboardHeader() {
                   </div>
                 )}
 
-                {searchPRs.filter(pr => commandQuery === "" || pr.title.toLowerCase().includes(commandQuery.toLowerCase()) || pr.repo.toLowerCase().includes(commandQuery.toLowerCase())).length > 0 && (
+                {searchPRs.filter((pr: any) => commandQuery === "" || pr.title.toLowerCase().includes(commandQuery.toLowerCase()) || pr.repo.toLowerCase().includes(commandQuery.toLowerCase())).length > 0 && (
                   <div className="space-y-1">
                     <div className="text-[10px] font-semibold text-[#49454F] px-2.5 uppercase tracking-wider">Pull Requests</div>
                     {searchPRs
-                      .filter(pr => commandQuery === "" || pr.title.toLowerCase().includes(commandQuery.toLowerCase()) || pr.repo.toLowerCase().includes(commandQuery.toLowerCase()))
-                      .map((pr) => (
+                      .filter((pr: any) => commandQuery === "" || pr.title.toLowerCase().includes(commandQuery.toLowerCase()) || pr.repo.toLowerCase().includes(commandQuery.toLowerCase()))
+                      .map((pr: any) => (
                         <a
                           key={pr.id}
                           href={`/repos/${pr.repo.replace("/", "-")}/prs/${pr.id}`}
@@ -690,12 +690,12 @@ export default function DashboardHeader() {
                   </div>
                 )}
 
-                {searchDecisions.filter(dec => commandQuery === "" || dec.title.toLowerCase().includes(commandQuery.toLowerCase())).length > 0 && (
+                {searchDecisions.filter((dec: any) => commandQuery === "" || dec.title.toLowerCase().includes(commandQuery.toLowerCase())).length > 0 && (
                   <div className="space-y-1">
                     <div className="text-[10px] font-semibold text-[#49454F] px-2.5 uppercase tracking-wider">Decisions</div>
                     {searchDecisions
-                      .filter(dec => commandQuery === "" || dec.title.toLowerCase().includes(commandQuery.toLowerCase()))
-                      .map((dec) => (
+                      .filter((dec: any) => commandQuery === "" || dec.title.toLowerCase().includes(commandQuery.toLowerCase()))
+                      .map((dec: any) => (
                         <button
                           key={dec.title}
                           onClick={() => {
@@ -712,9 +712,9 @@ export default function DashboardHeader() {
                   </div>
                 )}
 
-                {repos.filter(r => commandQuery === "" || r.fullName.toLowerCase().includes(commandQuery.toLowerCase())).length === 0 &&
-                  searchPRs.filter(pr => commandQuery === "" || pr.title.toLowerCase().includes(commandQuery.toLowerCase()) || pr.repo.toLowerCase().includes(commandQuery.toLowerCase())).length === 0 &&
-                  searchDecisions.filter(dec => commandQuery === "" || dec.title.toLowerCase().includes(commandQuery.toLowerCase())).length === 0 && (
+                {repos.filter((r: any) => commandQuery === "" || r.fullName.toLowerCase().includes(commandQuery.toLowerCase())).length === 0 &&
+                  searchPRs.filter((pr: any) => commandQuery === "" || pr.title.toLowerCase().includes(commandQuery.toLowerCase()) || pr.repo.toLowerCase().includes(commandQuery.toLowerCase())).length === 0 &&
+                  searchDecisions.filter((dec: any) => commandQuery === "" || dec.title.toLowerCase().includes(commandQuery.toLowerCase())).length === 0 && (
                     <div className="text-center py-8 text-xs text-[#79747E]">No results matching "{commandQuery}"</div>
                   )}
               </div>
