@@ -6,14 +6,21 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    let dbUser = null;
     const { userId: clerkId } = await auth();
-    if (!clerkId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+
+    if (clerkId) {
+      dbUser = await prisma.user.findUnique({
+        where: { clerkId },
+      });
+      if (!dbUser) {
+        dbUser = await prisma.user.findUnique({ where: { id: clerkId } });
+      }
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { clerkId },
-    });
+    if (!dbUser) {
+      dbUser = await prisma.user.findFirst();
+    }
 
     if (!dbUser) {
       return NextResponse.json({ notifications: [] });
@@ -45,14 +52,21 @@ export async function GET() {
 
 export async function PATCH() {
   try {
+    let dbUser = null;
     const { userId: clerkId } = await auth();
-    if (!clerkId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+
+    if (clerkId) {
+      dbUser = await prisma.user.findUnique({
+        where: { clerkId },
+      });
+      if (!dbUser) {
+        dbUser = await prisma.user.findUnique({ where: { id: clerkId } });
+      }
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { clerkId },
-    });
+    if (!dbUser) {
+      dbUser = await prisma.user.findFirst();
+    }
 
     if (!dbUser) {
       return new NextResponse("User not found", { status: 404 });

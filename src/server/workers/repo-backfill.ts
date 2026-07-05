@@ -16,6 +16,15 @@ export const backfillWorker = new Worker(
     try {
       console.log(`[Backfill] Starting backfill for ${fullName}`);
 
+      // 0. Ensure the repository still exists in the DB before starting work
+      const repoExists = await prisma.repository.findUnique({
+        where: { id: repoId },
+      });
+      if (!repoExists) {
+        console.warn(`[Backfill] Repository ${repoId} no longer exists in database. Skipping job.`);
+        return;
+      }
+
       // 1. Initialize GitHub App Octokit for this installation
       const appId = process.env.GITHUB_APP_ID!;
       const privateKey = process.env.GITHUB_PRIVATE_KEY!.replace(/\\n/g, "\n");
@@ -234,19 +243,23 @@ export const backfillWorker = new Worker(
     } catch (error: any) {
       console.error(`[Backfill] Failed backfill for ${fullName}:`, error);
 
-      // 5. On failure, update Repository Status to FAILED
-      await prisma.repository.update({
-        where: { id: repoId },
-        data: {
-          syncStatus: "FAILED",
-        },
-      });
-      
-      // Also update Dataset status
-      await prisma.dataset.update({
-        where: { repoId: repoId },
-        data: { processingStatus: "FAILED" },
-      });
+      try {
+        // 5. On failure, update Repository Status to FAILED
+        await prisma.repository.update({
+          where: { id: repoId },
+          data: {
+            syncStatus: "FAILED",
+          },
+        });
+        
+        // Also update Dataset status
+        await prisma.dataset.update({
+          where: { repoId: repoId },
+          data: { processingStatus: "FAILED" },
+        });
+      } catch (updateErr) {
+        console.warn(`[Backfill] Could not update status to FAILED for ${repoId} (likely deleted).`);
+      }
 
       throw error; // Let BullMQ handle retries/failure logging
     }
