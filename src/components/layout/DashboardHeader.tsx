@@ -184,7 +184,7 @@ export default function DashboardHeader() {
     },
     refetchInterval: 10000,
   });
-  const repos = reposData ? reposData.map((r: any) => ({
+  const repos = reposData ? (Array.isArray(reposData) ? reposData : (reposData as any).repositories || []).map((r: any) => ({
     fullName: r.fullName,
     status: r.status || "SYNCED"
   })) : [];

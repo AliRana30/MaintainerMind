@@ -302,12 +302,9 @@ If your repositories are stuck in a continuous "SYNCING" state on the dashboard,
 4. Restart your worker (`npm run worker`). It will immediately connect to the cloud queue and process the stuck repositories.
 
 **Fix 2: Force Reset the Status**
-If you just want to clear the "SYNCING" status from the UI without running the worker:
-1. Stop your running dev server.
-2. Run `npx prisma studio` in your terminal.
-3. It will open `http://localhost:5555` in your browser.
-4. Open the **Repository** table, find the `syncStatus` column, and change `SYNCING` to `SYNCED` or `FAILED`.
-5. Click **Save 1 Record**, close Prisma Studio, and restart your dev server.
+If you just want to clear the "SYNCING" status from the UI:
+- **Production Environment**: Go to the **Settings** page in your dashboard, locate the repository under the "Connected Repositories" section, and click the **Force Reset** button.
+- **Local Development**: Run `npx prisma studio`, open the `Repository` table, and manually change the `syncStatus` from `SYNCING` to `FAILED` or `SYNCED`.
 
 ### Optional: run Cognee locally
 

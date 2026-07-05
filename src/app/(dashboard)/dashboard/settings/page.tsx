@@ -93,16 +93,17 @@ export default function SettingsPage() {
   const user = userDataResponse?.user;
 
   // 2. Fetch Connected Repositories
-  const { data: reposData, isLoading: isLoadingRepos } = useQuery<{ repositories: Repository[] }>({
+  const { data: reposData, isLoading: isLoadingRepos } = useQuery<any[]>({
     queryKey: ["repos"],
     queryFn: async () => {
       const res = await fetch("/api/repos");
       if (!res.ok) throw new Error("Failed to fetch repositories");
-      return res.json();
+      const json = await res.json();
+      return json.repositories || [];
     },
     refetchInterval: 10000,
   });
-  const repos = reposData?.repositories || [];
+  const repos = reposData || [];
 
   // 3. Fetch API Keys
   const { data: keysData, isLoading: isLoadingKeys } = useQuery<{ apiKeys: ApiKey[] }>({
@@ -353,12 +354,31 @@ export default function SettingsPage() {
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => setRepoToDelete(repo)}
-                          className="h-8 px-3 rounded-lg border border-[#842029]/20 text-[#842029] hover:bg-[#842029]/10 text-xs font-bold transition-colors cursor-pointer"
-                        >
-                          Disconnect
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {repo.status === "SYNCING" && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch(`/api/repos/${repo.id}/force-reset`, { method: "POST" });
+                                  if (!res.ok) throw new Error("Failed to reset");
+                                  queryClient.invalidateQueries({ queryKey: ["repos"] });
+                                } catch (e) {
+                                  console.error("Failed to force reset repository.", e);
+                                  alert("Failed to force reset repository.");
+                                }
+                              }}
+                              className="h-8 px-3 rounded-lg border border-[#0F5132]/20 text-[#0F5132] hover:bg-[#0F5132]/10 text-xs font-bold transition-colors cursor-pointer"
+                            >
+                              Force Reset
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setRepoToDelete(repo)}
+                            className="h-8 px-3 rounded-lg border border-[#842029]/20 text-[#842029] hover:bg-[#842029]/10 text-xs font-bold transition-colors cursor-pointer"
+                          >
+                            Disconnect
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
