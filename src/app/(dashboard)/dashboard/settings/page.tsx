@@ -56,7 +56,7 @@ const SPRING_SOFT = { type: "spring", stiffness: 300, damping: 28 } as const;
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
-  const [activePanel, setActivePanel] = useState<PanelType>("account");
+  const [activePanel, setActivePanel] = useState<PanelType>("repositories");
 
   // State for Account Panel
   const [nameVal, setNameVal] = useState("");

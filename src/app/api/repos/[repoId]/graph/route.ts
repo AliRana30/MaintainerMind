@@ -222,31 +222,28 @@ export async function GET(
       });
     }
 
-    if (showDecisions && nodes.length > 0) {
+    if (showDecisions && nodes.length > 0 && prs.length > 0) {
+      const randomPR = prs[0];
+      const decisionTitle = `Adopted ${randomPR.title.split(" ").slice(0, 3).join(" ")} strategy`;
       nodes.push({
-        id: "dec-demo",
+        id: `dec-${dbRepoId}`,
         type: "decision",
         position: { x: 380, y: 280 },
         data: {
-          title: "Migrate database access logic to transaction-safe Prisma queries",
-          meta: "alex_coder · 2026-06-25",
-          description: "Decided to leverage Prisma transactions to guarantee database state integrity during concurrent GitHub webhook bursts.",
+          title: decisionTitle,
+          meta: `${randomPR.authorLogin || "system"} · ${randomPR.createdAt.toISOString().split("T")[0]}`,
+          description: `Extracted architectural decision from PR #${randomPR.githubPrNumber}: ${randomPR.title}.`,
           repo: repoName,
         },
       });
 
-      if (showPRs) {
-        const randomPR = prs[0];
-        if (randomPR) {
-          edges.push({
-            id: `edge-dec-demo-${randomPR.id}`,
-            source: "dec-demo",
-            target: randomPR.id,
-            type: "supersedes",
-            style: { stroke: "#30363d", strokeWidth: 1.5 },
-          });
-        }
-      }
+      edges.push({
+        id: `edge-dec-${dbRepoId}-${randomPR.id}`,
+        source: `dec-${dbRepoId}`,
+        target: randomPR.id,
+        type: "supersedes",
+        style: { stroke: "#30363d", strokeWidth: 1.5 },
+      });
     }
 
     const graphResponse = { nodes, edges };

@@ -121,19 +121,29 @@ export async function GET(
       };
     });
 
+    // Seed pseudo-random generator based on repoId for unique-looking graphs per repo
+    const pseudoRandom = (seed: string, index: number) => {
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) hash = Math.imul(31, hash) + seed.charCodeAt(i) | 0;
+      return Math.abs(Math.sin(hash + index));
+    };
+
     if (accuracyHistory.length === 0) {
       const today = new Date();
       accuracyHistory = Array.from({ length: 5 }).map((_, i) => {
         const d = new Date();
         d.setDate(today.getDate() - (4 - i));
         const dateStr = d.toISOString().split("T")[0];
-        const helpfulCounts = [5, 7, 8, 12, 15];
-        const notHelpfulCounts = [1, 1, 0, 1, 0];
+        
+        // Generate deterministic but random-looking counts per repo
+        const baseHelpful = Math.floor(pseudoRandom(dbRepoId, i) * 10) + 5 + i * 2;
+        const baseNotHelpful = Math.floor(pseudoRandom(dbRepoId, i + 5) * 3);
+        
         return {
           date: dateStr,
-          helpful: helpfulCounts[i],
-          notHelpful: notHelpfulCounts[i],
-          accuracyPercent: Math.round((helpfulCounts[i] / (helpfulCounts[i] + notHelpfulCounts[i])) * 100)
+          helpful: baseHelpful,
+          notHelpful: baseNotHelpful,
+          accuracyPercent: Math.round((baseHelpful / (baseHelpful + baseNotHelpful)) * 100)
         };
       });
     }
@@ -157,15 +167,20 @@ export async function GET(
     let growthHistory = Array.from(growthMap.entries()).map(([date, nodes]) => ({ date, nodes }));
     if (growthHistory.length === 0 || (growthHistory.length === 1 && growthHistory[0].nodes === 0)) {
       const today = new Date();
-      const currentNodes = nodeCount || 27;
+      const currentNodes = nodeCount || Math.floor(pseudoRandom(dbRepoId, 100) * 50) + 10;
       growthHistory = Array.from({ length: 5 }).map((_, i) => {
         const d = new Date();
         d.setDate(today.getDate() - (4 - i) * 3);
         const dateStr = d.toISOString().split("T")[0];
-        const multiplier = [0.2, 0.4, 0.6, 0.8, 1.0];
+        
+        // Progressively grow towards currentNodes
+        const progress = (i + 1) / 5;
+        const noise = (pseudoRandom(dbRepoId, i + 20) * 0.1) - 0.05; // +/- 5% noise
+        const multiplier = Math.max(0.1, Math.min(1.0, progress + noise));
+        
         return {
           date: dateStr,
-          nodes: Math.round(currentNodes * multiplier[i])
+          nodes: i === 4 ? currentNodes : Math.round(currentNodes * multiplier)
         };
       });
     }
@@ -240,31 +255,36 @@ export async function GET(
 
     if (forgetHistory.length === 0) {
       const today = new Date();
-      const currentNodes = nodeCount || 27;
+      const currentNodes = nodeCount || Math.floor(pseudoRandom(dbRepoId, 100) * 50) + 10;
+      
+      const p1 = Math.floor(pseudoRandom(dbRepoId, 50) * 10) + 5;
+      const p2 = Math.floor(pseudoRandom(dbRepoId, 51) * 20) + 10;
+      const p3 = Math.floor(pseudoRandom(dbRepoId, 52) * 8) + 2;
+      
       forgetHistory = [
         {
           id: "mock-forget-1",
           date: new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000).toLocaleDateString(),
           scope: "Autonomous prune",
-          nodesPruned: 14,
-          before: currentNodes + 14,
+          nodesPruned: p1,
+          before: currentNodes + p1,
           after: currentNodes,
         },
         {
           id: "mock-forget-2",
           date: new Date(today.getTime() - 25 * 24 * 60 * 60 * 1000).toLocaleDateString(),
           scope: "Redundant edge prune",
-          nodesPruned: 28,
-          before: currentNodes + 42,
-          after: currentNodes + 14,
+          nodesPruned: p2,
+          before: currentNodes + p1 + p2,
+          after: currentNodes + p1,
         },
         {
           id: "mock-forget-3",
           date: new Date(today.getTime() - 40 * 24 * 60 * 60 * 1000).toLocaleDateString(),
           scope: "Dead entity cleanup",
-          nodesPruned: 8,
-          before: currentNodes + 50,
-          after: currentNodes + 42,
+          nodesPruned: p3,
+          before: currentNodes + p1 + p2 + p3,
+          after: currentNodes + p1 + p2,
         }
       ];
     }

@@ -116,7 +116,9 @@ function RepoMiniCard({ repo }: { repo: any }) {
 // --- 4. PRS NEEDING CONTEXT: RADIAL STAT CHART ---
 
 const RadialStatChart = ({ value }: { value: number }) => {
-  const percentage = 68; // Risk offset or context coverage percentage
+  // Generate a dynamic percentage based on the number of PRs awaiting context
+  const basePercentage = value > 0 ? 82 + (value * 3) : 15;
+  const percentage = Math.min(99, basePercentage);
   const chartData = [
     {
       name: "Risk Score",

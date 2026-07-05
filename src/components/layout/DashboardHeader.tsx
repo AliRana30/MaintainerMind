@@ -174,7 +174,21 @@ export default function DashboardHeader() {
     toggleMobileSidebar
   } = useDashboardStore();
 
-  const [repos, setRepos] = useState<any[]>([]);
+  const { data: reposData } = useQuery({
+    queryKey: ["repos"],
+    queryFn: async () => {
+      const res = await fetch("/api/repos");
+      if (!res.ok) throw new Error("Failed to fetch repositories");
+      const json = await res.json();
+      return json.repositories || [];
+    },
+    refetchInterval: 10000,
+  });
+  const repos = reposData ? reposData.map((r: any) => ({
+    fullName: r.fullName,
+    status: r.syncStatus || "SYNCED"
+  })) : [];
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [breadcrumbOpen, setBreadcrumbOpen] = useState(false);
@@ -338,27 +352,10 @@ export default function DashboardHeader() {
   };
 
   useEffect(() => {
-    async function fetchHeaderData() {
-      try {
-        const res = await fetch("/api/dashboard/stats");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.repositoryActivity) {
-            setRepos(data.repositoryActivity.map((r: any) => ({
-              fullName: r.name,
-              status: r.status
-            })));
-            if (!selectedRepo && data.repositoryActivity.length > 0) {
-              setSelectedRepo(data.repositoryActivity[0].name);
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch header details", err);
-      }
+    if (!selectedRepo && repos.length > 0) {
+      setSelectedRepo(repos[0].fullName);
     }
-    fetchHeaderData();
-  }, [selectedRepo, setSelectedRepo]);
+  }, [selectedRepo, setSelectedRepo, repos]);
 
   const getPageTitle = (path: string) => {
     if (path === "/dashboard") return "Overview";

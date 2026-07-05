@@ -53,10 +53,15 @@ export default function RepositoriesPage() {
   const [activeKebabId, setActiveKebabId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "synced" | "syncing" | "failed">("all");
-  
+  const [toastMsg, setToastMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
   const handleConnectRepo = () => {
-    // Redirect to backend endpoint that securely attaches the user session state and redirects to GitHub
     window.location.href = "/api/github/install";
+  };
+
+  const showToast = (text: string, type: "success" | "error") => {
+    setToastMsg({ text, type });
+    setTimeout(() => setToastMsg(null), 3000);
   };
 
   const handleDeleteRepo = async (id: string) => {
@@ -70,9 +75,10 @@ export default function RepositoriesPage() {
         throw new Error("Failed to disconnect repository");
       }
       refetch();
+      showToast("Repository disconnected successfully", "success");
     } catch (err) {
       console.error(err);
-      alert("Failed to disconnect repository");
+      showToast("Failed to disconnect repository", "error");
     } finally {
       setActiveKebabId(null);
     }
