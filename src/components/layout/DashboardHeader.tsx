@@ -174,7 +174,7 @@ export default function DashboardHeader() {
     toggleMobileSidebar
   } = useDashboardStore();
 
-  const { data: reposData } = useQuery({
+  const { data: reposData, isLoading: isReposLoading } = useQuery({
     queryKey: ["repos"],
     queryFn: async () => {
       const res = await fetch("/api/repos");
@@ -186,7 +186,7 @@ export default function DashboardHeader() {
   });
   const repos = reposData ? reposData.map((r: any) => ({
     fullName: r.fullName,
-    status: r.syncStatus || "SYNCED"
+    status: r.status || "SYNCED"
   })) : [];
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -494,8 +494,13 @@ export default function DashboardHeader() {
                   </div>
 
                   <div className="max-h-56 overflow-y-auto p-1.5 space-y-1">
-                    {filteredRepos.length > 0 ? (
-                      filteredRepos.map((repo) => (
+                    {isReposLoading ? (
+                      <div className="text-xs text-[#49454F] p-4 text-center flex items-center justify-center gap-2">
+                        <div className="w-3 h-3 border-2 border-[#6E56F2]/30 border-t-[#6E56F2] rounded-full animate-spin" />
+                        Loading repos...
+                      </div>
+                    ) : filteredRepos.length > 0 ? (
+                      filteredRepos.map((repo: any) => (
                         <button
                           key={repo.fullName}
                           onClick={() => {
