@@ -60,11 +60,19 @@ export async function POST(
           // 1. Fetch memory graph nodes from Cognee
           let recallResults: any[] = [];
           try {
-            recallResults = await cogneeRecall(query, {
-              datasets: [dataset],
-              searchType: "GRAPH_COMPLETION",
-              topK: 5,
-            });
+            // Strict timeout wrapper to prevent res.json() or streaming proxy from hanging forever
+            const timeoutPromise = new Promise<any[]>((_, reject) =>
+              setTimeout(() => reject(new Error("Cognee recall timed out after 15 seconds")), 15000)
+            );
+            
+            recallResults = await Promise.race([
+              cogneeRecall(query, {
+                datasets: [dataset],
+                searchType: "GRAPH_COMPLETION",
+                topK: 5,
+              }),
+              timeoutPromise
+            ]);
           } catch (err) {
             console.warn("cogneeRecall failed in message route, using fallback", err);
           }
@@ -82,18 +90,29 @@ export async function POST(
 
           sendEvent("status", { message: "Querying repository statistics..." });
           
-          // 2. Fetch DB stats for better context in answers
-          const [prCount, issueCount, commitCount] = await Promise.all([
-            prisma.pullRequest.count({ where: { repoId: repo.id } }),
-            prisma.issue.count({ where: { repoId: repo.id } }),
-            prisma.commit.count({ where: { repoId: repo.id } }),
-          ]);
-
-          const recentPRs = await prisma.pullRequest.findMany({
-            where: { repoId: repo.id },
-            orderBy: { updatedAt: "desc" },
-            take: 5,
-          });
+          // 2. Fetch DB stats for better context in answers (with strict timeout)
+          let prCount = 0, issueCount = 0, commitCount = 0, recentPRs: any[] = [];
+          try {
+            const dbTimeout = new Promise<void>((_, reject) =>
+              setTimeout(() => reject(new Error("Prisma queries timed out after 10 seconds")), 10000)
+            );
+            
+            await Promise.race([
+              Promise.all([
+                prisma.pullRequest.count({ where: { repoId: repo.id } }).then(c => { prCount = c; }),
+                prisma.issue.count({ where: { repoId: repo.id } }).then(c => { issueCount = c; }),
+                prisma.commit.count({ where: { repoId: repo.id } }).then(c => { commitCount = c; }),
+                prisma.pullRequest.findMany({
+                  where: { repoId: repo.id },
+                  orderBy: { updatedAt: "desc" },
+                  take: 5,
+                }).then(prs => { recentPRs = prs; })
+              ]),
+              dbTimeout
+            ]);
+          } catch (dbErr) {
+            console.warn("Prisma stats queries timed out or failed in message route:", dbErr);
+          }
 
           if (sourceNodes.length > 0) {
             try {
@@ -107,13 +126,19 @@ export async function POST(
 
           // 3. Save USER message to database
           try {
-            await prisma.chatMessage.create({
-              data: {
-                sessionId,
-                role: "USER",
-                content: query,
-              },
-            });
+            const saveTimeout = new Promise<void>((_, reject) =>
+              setTimeout(() => reject(new Error("Prisma user save timed out")), 5000)
+            );
+            await Promise.race([
+              prisma.chatMessage.create({
+                data: {
+                  sessionId,
+                  role: "USER",
+                  content: query,
+                },
+              }),
+              saveTimeout
+            ]);
           } catch (e) {
             console.warn("Failed to save user message", e);
           }
@@ -216,15 +241,21 @@ export async function POST(
 
           // 5. Save ASSISTANT message to database on completion
           try {
-            await prisma.chatMessage.create({
-              data: {
-                sessionId,
-                role: "ASSISTANT",
-                content: fullText,
-                citations: sourceNodes as any,
-                confidenceScore: 92,
-              },
-            });
+            const saveTimeout = new Promise<void>((_, reject) =>
+              setTimeout(() => reject(new Error("Prisma assistant save timed out")), 5000)
+            );
+            await Promise.race([
+              prisma.chatMessage.create({
+                data: {
+                  sessionId,
+                  role: "ASSISTANT",
+                  content: fullText,
+                  citations: sourceNodes as any,
+                  confidenceScore: 92,
+                },
+              }),
+              saveTimeout
+            ]);
           } catch (e) {
             console.warn("Failed to save assistant message", e);
           }
