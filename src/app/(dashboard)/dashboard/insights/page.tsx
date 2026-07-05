@@ -257,19 +257,21 @@ export default function PRInsightsDashboard() {
   const [selectedRepo] = useActiveRepo();
   const [expandedPR, setExpandedPR] = useState<number | null>(null);
 
-  // 1. Fetch repositories to map selectedRepo name to DB ID
+  // 1. Fetch repositories to map selectedRepo name to DB ID using the shared "repos" cache
   const { data: reposData, isLoading: isLoadingRepos } = useQuery({
-    queryKey: ["repos-list"],
+    queryKey: ["repos"],
     queryFn: async () => {
       const res = await fetch("/api/repos");
-      if (!res.ok) throw new Error("Failed to fetch repositories list");
-      return res.json();
+      if (!res.ok) throw new Error("Failed to fetch repositories");
+      const json = await res.json();
+      return json.repositories || [];
     },
+    refetchInterval: 10000,
   });
 
-  const repos = reposData?.repositories || [];
+  const repos = reposData || [];
   const activeRepo = repos.find(
-    (r: any) => r.name === selectedRepo || r.id === selectedRepo
+    (r: any) => r.fullName === selectedRepo || r.name === selectedRepo || r.id === selectedRepo
   );
   const repoId = activeRepo?.id;
 
@@ -459,7 +461,7 @@ export default function PRInsightsDashboard() {
             <GitPullRequest className="w-8 h-8 text-[#79747E] mb-2.5 opacity-60" />
             <p className="text-xs font-semibold text-[#1C1B1F]">No Open PRs Right Now</p>
             <p className="text-[11px] text-[#49454F] max-w-sm mt-1">
-              Insights will appear here automatically once a pull request is opened in the repository.
+              There's no opened PR in this repo. Insights will appear here automatically once a pull request is opened.
             </p>
           </div>
         ) : (

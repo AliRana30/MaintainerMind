@@ -27,16 +27,18 @@ export default function DashboardChatPage() {
   const router = useRouter();
 
   // Fetch real connected repositories via TanStack Query
-  const { data: reposData, isLoading } = useQuery<{ repositories: Repository[] }>({
+  const { data: reposData, isLoading } = useQuery({
     queryKey: ["repos"],
     queryFn: async () => {
       const res = await fetch("/api/repos");
       if (!res.ok) throw new Error("Failed to fetch repositories");
-      return res.json();
+      const json = await res.json();
+      return json.repositories || [];
     },
+    refetchInterval: 10000,
   });
 
-  const repos = reposData?.repositories || [];
+  const repos = reposData || [];
 
   return (
     <div className="min-h-[calc(100vh-140px)] bg-[#FBFAFE] text-[#1C1B1F] flex flex-col items-center justify-center p-6">
@@ -92,7 +94,7 @@ export default function DashboardChatPage() {
               </button>
             </div>
           ) : (
-            repos.map((repo, i) => {
+            repos.map((repo: any, i: number) => {
               const isSyncing = repo.status === "SYNCING";
               const isFailed = repo.status === "FAILED";
               const isDisabled = isSyncing;
