@@ -14,7 +14,9 @@ import {
   Database,
   Search,
   Check,
-  Clock
+  Clock,
+  RefreshCw,
+  AlertOctagon
 } from "lucide-react";
 import {
   UnlinkIcon,
@@ -62,6 +64,34 @@ export default function RepositoriesPage() {
   const showToast = (text: string, type: "success" | "error") => {
     setToastMsg({ text, type });
     setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const handleForceReset = async (id: string) => {
+    try {
+      const res = await fetch(`/api/repos/${id}/force-reset`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to reset");
+      refetch();
+      showToast("Repository reset to FAILED.", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to force reset repository", "error");
+    } finally {
+      setActiveKebabId(null);
+    }
+  };
+
+  const handleRetrySync = async (id: string) => {
+    try {
+      const res = await fetch(`/api/repos/${id}/retry-sync`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to retry sync");
+      refetch();
+      showToast("Repository sync queued.", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to retry sync", "error");
+    } finally {
+      setActiveKebabId(null);
+    }
   };
 
   const handleDeleteRepo = async (id: string) => {
@@ -275,6 +305,32 @@ export default function RepositoriesPage() {
                                 exit={{ opacity: 0, scale: 0.95, y: 5 }}
                                 className="absolute right-0 bottom-7 mt-1.5 w-32 bg-[#F0ECF5] border border-[#E4E1EC] rounded-lg shadow-m3-l3 overflow-hidden z-25 p-1"
                               >
+                                {repo.status === "SYNCING" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleForceReset(repo.id);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs text-[#664D03] hover:bg-[#664D03]/10 transition-colors text-left font-semibold cursor-pointer"
+                                  >
+                                    <AlertOctagon className="w-3.5 h-3.5" />
+                                    <span>Force Reset</span>
+                                  </button>
+                                )}
+                                {repo.status === "FAILED" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleRetrySync(repo.id);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs text-[#0F5132] hover:bg-[#0F5132]/10 transition-colors text-left font-semibold cursor-pointer"
+                                  >
+                                    <RefreshCw className="w-3.5 h-3.5" />
+                                    <span>Sync Back</span>
+                                  </button>
+                                )}
                                 <button
                                   onClick={(e) => {
                                     e.preventDefault();
@@ -392,6 +448,32 @@ export default function RepositoriesPage() {
                               exit={{ opacity: 0, scale: 0.95, y: 5 }}
                               className="absolute right-0 mt-1.5 w-32 bg-[#F0ECF5] border border-[#E4E1EC] rounded-lg shadow-m3-l3 overflow-hidden z-25 p-1"
                             >
+                              {repo.status === "SYNCING" && (
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleForceReset(repo.id);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs text-[#664D03] hover:bg-[#664D03]/10 transition-colors text-left font-semibold cursor-pointer"
+                                >
+                                  <AlertOctagon className="w-3.5 h-3.5" />
+                                  <span>Force Reset</span>
+                                </button>
+                              )}
+                              {repo.status === "FAILED" && (
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleRetrySync(repo.id);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs text-[#0F5132] hover:bg-[#0F5132]/10 transition-colors text-left font-semibold cursor-pointer"
+                                >
+                                  <RefreshCw className="w-3.5 h-3.5" />
+                                  <span>Sync Back</span>
+                                </button>
+                              )}
                               <button
                                 onClick={(e) => {
                                   e.preventDefault();
