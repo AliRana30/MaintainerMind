@@ -291,6 +291,24 @@ npm run dev
 
 Open http://localhost:3000.
 
+### Troubleshooting: Repositories Stuck in "SYNCING"
+
+If your repositories are stuck in a continuous "SYNCING" state on the dashboard, it means your background worker is either not running or failing to connect to your Upstash Redis queue. 
+
+**Fix 1: Configure Redis for the Worker**
+1. Check your `.env` file. If `REDIS_URL` is set to `redis://localhost:6379`, your worker is trying to connect to a local Redis instance.
+2. If you are using Upstash in production, go to your Upstash Redis dashboard, scroll to **Endpoints**, and copy the **Node (ioredis)** connection string (it looks like `rediss://default:YOUR_PASSWORD@your-url.upstash.io:PORT`).
+3. Replace `REDIS_URL` in your `.env` with that `rediss://` string.
+4. Restart your worker (`npm run worker`). It will immediately connect to the cloud queue and process the stuck repositories.
+
+**Fix 2: Force Reset the Status**
+If you just want to clear the "SYNCING" status from the UI without running the worker:
+1. Stop your running dev server.
+2. Run `npx prisma studio` in your terminal.
+3. It will open `http://localhost:5555` in your browser.
+4. Open the **Repository** table, find the `syncStatus` column, and change `SYNCING` to `SYNCED` or `FAILED`.
+5. Click **Save 1 Record**, close Prisma Studio, and restart your dev server.
+
 ### Optional: run Cognee locally
 
 ```bash
