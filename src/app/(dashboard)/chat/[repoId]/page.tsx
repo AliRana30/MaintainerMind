@@ -260,6 +260,8 @@ export default function ChatSessionPage() {
               const data = JSON.parse(dataStr);
               if (currentEvent === "status") {
                 setStreamStatus(data.message || "");
+              } else if (currentEvent === "error") {
+                throw new Error(data.message || "Server streaming error");
               } else if (currentEvent === "context") {
                 fetchedCitations = data.results || [];
                 setCurrentCitations(fetchedCitations);
@@ -273,7 +275,10 @@ export default function ChatSessionPage() {
                   )
                 );
               }
-            } catch (err) {
+            } catch (err: any) {
+              if (currentEvent === "error") {
+                throw err; // Re-throw to be caught by the outer try-catch block
+              }
               console.warn("Error parsing SSE data line", err);
             }
           }
