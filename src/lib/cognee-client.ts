@@ -61,7 +61,8 @@ export async function fetchWithRetry(
   url: string,
   init: RequestInit,
   retries = 3,
-  baseDelay = 1000
+  baseDelay = 1000,
+  timeoutMs = 12000
 ): Promise<Response> {
   const parsedUrl = new URL(url);
   const pathname = parsedUrl.pathname;
@@ -73,8 +74,12 @@ export async function fetchWithRetry(
 
   let attempt = 1;
   while (true) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
-      const res = await fetch(url, init);
+      const res = await fetch(url, { ...init, signal: controller.signal });
+      clearTimeout(timeoutId);
 
       if (res.status === 429) {
         const retryAfterHeader = res.headers.get("Retry-After");
@@ -92,7 +97,9 @@ export async function fetchWithRetry(
 
       recordSuccess(pathname);
       return res;
-    } catch (error) {
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+
       if (error instanceof CogneeError && error.status === 429 && attempt < retries) {
         attempt++;
         continue;
